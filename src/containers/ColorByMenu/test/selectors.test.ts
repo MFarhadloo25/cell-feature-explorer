@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { find } from "lodash";
 
 import { DOWNLOAD_CONFIG_TYPE_PROTEIN } from "../../../constants/index";
+import { MISSING_CATEGORY_KEY } from "../../../state/selection/constants";
 import { mockState } from "../../../state/test/mocks";
 import { State } from "../../../state/types";
 import {
@@ -114,6 +115,34 @@ describe("ColorByMenu selectors", () => {
             result.forEach((ele) => {
                 expect(ele.disabled).to.be.true;
             });
+        });
+        it("adds exactly one N/A row for missing data, even across recomputations", () => {
+            const stateWithMissing: State = {
+                ...newMockState,
+                metadata: {
+                    ...newMockState.metadata,
+                    featureData: {
+                        ...newMockState.metadata.featureData,
+                        values: {
+                            ...newMockState.metadata.featureData.values,
+                            "cell-line": [5, null],
+                        },
+                    },
+                },
+            };
+            const countMissingRows = (result: PanelData[]) =>
+                result.filter((ele) => ele.id === MISSING_CATEGORY_KEY).length;
+
+            expect(countMissingRows(getInteractivePanelData(stateWithMissing))).to.equal(1);
+
+            // Changing the filter recomputes the panel data while the memoized
+            // category options are reused; the N/A row must not be duplicated.
+            const refiltered: State = {
+                ...stateWithMissing,
+                selection: { ...stateWithMissing.selection, filterExclude: ["Paxillin"] },
+            };
+            expect(countMissingRows(getInteractivePanelData(refiltered))).to.equal(1);
+            expect(countMissingRows(getInteractivePanelData(stateWithMissing))).to.equal(1);
         });
     });
 

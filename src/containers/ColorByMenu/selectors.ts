@@ -149,18 +149,23 @@ export const getInteractivePanelData = createSelector(
             {} as { [key: string]: number }
         );
 
-        if (countsByCategory[MISSING_CATEGORY_KEY] > 0) {
-            // Some data points have no data for this category. Modify categories
-            // to include an N/A entry.
-            categories.push({
-                color: MISSING_CATEGORY_COLOR,
-                name: MISSING_CATEGORY_LABEL,
-                key: MISSING_CATEGORY_KEY,
-            });
-        }
+        // Some data points may have no data for this category; append an N/A
+        // entry. `categories` is a memoized selector result, so copy rather
+        // than push into it.
+        const categoriesWithMissing: MeasuredFeaturesOption[] =
+            countsByCategory[MISSING_CATEGORY_KEY] > 0
+                ? [
+                      ...categories,
+                      {
+                          color: MISSING_CATEGORY_COLOR,
+                          name: MISSING_CATEGORY_LABEL,
+                          key: MISSING_CATEGORY_KEY,
+                      },
+                  ]
+                : categories;
 
-        const names = disambiguateCategoryNames(categories);
-        return map(categories, (category: MeasuredFeaturesOption, index: number) => {
+        const names = disambiguateCategoryNames(categoriesWithMissing);
+        return map(categoriesWithMissing, (category: MeasuredFeaturesOption, index: number) => {
             const id = category.key ?? category.name;
             const total: number = countsByCategory[id] || category.count || 0;
             const disabled = !displayable.has(id);
