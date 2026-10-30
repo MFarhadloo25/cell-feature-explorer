@@ -13,6 +13,7 @@ export const SCATTER_PLOT_NAME = "features-scatter-plot";
 export const SELECTIONS_PLOT_NAME = "selections-scatter-plot";
 export const COLOR_BY_SELECTOR = "colorBy";
 export const GROUP_BY_KEY = "groupBy";
+export const SHAPE_BY_SELECTOR = "shapeBy";
 
 export const CELL_ID_KEY = "CellId";
 export const FOV_ID_KEY = "FOVId";
@@ -72,7 +73,6 @@ export const GENERAL_PLOT_SETTINGS = {
     connectionLineWidth: 1.5,
     connectionLineDefaultColor: BASE_PALETTE_COLORS.mediumDarkGray as string,
     connectionLineOpacity: 0.5,
-    histogramColor: BASE_PALETTE_COLORS.lightGray,
     legend: {
         font: {
             color: BASE_PALETTE_COLORS.white,

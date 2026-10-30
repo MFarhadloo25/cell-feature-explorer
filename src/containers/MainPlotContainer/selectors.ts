@@ -6,7 +6,6 @@ import {
     ARRAY_OF_CELL_IDS_KEY,
     CELL_ID_KEY,
     FOV_ID_KEY,
-    GENERAL_PLOT_SETTINGS,
     GROUP_BY_KEY,
     PALETTE,
     SCATTER_PLOT_NAME,
@@ -51,6 +50,7 @@ import {
     getConnectByFeature,
     getConnectByCategory,
     getFiltersToExclude,
+    getFilteredShapeValues,
 } from "../../state/selection/selectors";
 import {
     ColorForPlot,
@@ -149,6 +149,7 @@ export const getMainPlotData = createSelector(
         getGroupByCategory,
         getCategoryGroupColorsAndNames,
         getCategoricalFeatureKeys,
+        getFilteredShapeValues,
     ],
     (
         xValues,
@@ -159,7 +160,8 @@ export const getMainPlotData = createSelector(
         categoryToColorBy,
         categoryToGroupBy,
         colorsForPlot,
-        categoricalFeatures
+        categoricalFeatures,
+        symbols
     ): GroupedPlotData | ContinuousPlotData => {
         // Only preserve values at indices where both x and y values are not null,
         // because a coordinate like (3, null) won't be plotted anyway and produces
@@ -176,6 +178,7 @@ export const getMainPlotData = createSelector(
                 x: newXAndYValues.xValues,
                 y: newXAndYValues.yValues,
                 customdata: customData,
+                symbols,
             };
         } else {
             return {
@@ -185,6 +188,7 @@ export const getMainPlotData = createSelector(
                 x: newXAndYValues.xValues,
                 y: newXAndYValues.yValues,
                 customdata: customData,
+                symbols,
             };
         }
     }
@@ -444,7 +448,7 @@ function makeScatterPlotData(
         customdata: plotData.customdata as any,
         marker: {
             size: mainPlotSettings.circleRadius,
-            symbol: "circle",
+            symbol: plotData.symbols ?? "circle",
         },
         // literal typing to avoid a widened type inferred
         mode: "markers" as const,
@@ -479,44 +483,6 @@ function makeLinePlotTrace(data: LinePlotData, settings: MainPlotSettings): Part
             width: settings.connectionLineWidth,
             color: color,
         },
-    };
-}
-
-function makeHistogramPlotX(data: (number | null)[]) {
-    return {
-        marker: {
-            color: GENERAL_PLOT_SETTINGS.histogramColor,
-            line: {
-                color: GENERAL_PLOT_SETTINGS.textColor,
-                width: 1,
-            },
-        },
-        name: `x histogram`,
-        nbinsx: 60,
-        showlegend: false,
-        // literal typing to avoid a widened type inferred
-        type: "histogram" as const,
-        x: data,
-        yaxis: "y2",
-    };
-}
-
-function makeHistogramPlotY(data: (number | null)[]) {
-    return {
-        marker: {
-            color: GENERAL_PLOT_SETTINGS.histogramColor,
-            line: {
-                color: GENERAL_PLOT_SETTINGS.textColor,
-                width: 1,
-            },
-        },
-        name: `y histogram`,
-        nbinsy: 60,
-        showlegend: false,
-        // literal typing to avoid a widened type inferred
-        type: "histogram" as const,
-        xaxis: "x2",
-        y: data,
     };
 }
 
@@ -558,11 +524,7 @@ export const getScatterPlotDataArray = createSelector(
     [composePlotlyData, getMainPlotSettings],
     (allPlotData, mainPlotSettings): Partial<PlotData>[] => {
         const { mainPlotData, selectedGroupPlotData } = allPlotData;
-        let traces = [
-            makeHistogramPlotX(mainPlotData.x),
-            makeHistogramPlotY(mainPlotData.y),
-            makeScatterPlotData(mainPlotData, mainPlotSettings),
-        ];
+        let traces = [makeScatterPlotData(mainPlotData, mainPlotSettings)];
         if (selectedGroupPlotData) {
             traces.push(makeScatterPlotData(selectedGroupPlotData, mainPlotSettings));
         }

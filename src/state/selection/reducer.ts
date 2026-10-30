@@ -1,4 +1,4 @@
-import { filter, pickBy, uniqBy } from "lodash";
+import { filter, omit, pickBy, uniqBy } from "lodash";
 import type { Action } from "redux";
 import type { SelectedGroups } from "..";
 
@@ -24,6 +24,15 @@ import {
     SET_MOUSE_POSITION,
     TOGGLE_APPLY_SELECTION_SET_COLOR,
     TOGGLE_FILTER_BY_CATEGORY_NAME,
+    SET_FILTER,
+    SET_FILTERS,
+    REMOVE_FILTER,
+    TOGGLE_FILTER_ENABLED,
+    CLEAR_FILTERS,
+    SET_SHAPE_OVERRIDE,
+    RESET_SHAPE_OVERRIDES,
+    TOGGLE_SHAPE_HIDDEN,
+    SHOW_ALL_SHAPE_CATEGORIES,
     TOGGLE_GALLERY_OPEN_CLOSE,
     SET_DATASET,
     RECEIVE_FILE_INFO_FOR_ALBUM_CELLS,
@@ -52,6 +61,12 @@ import {
     ChangeDownloadConfigAction,
     ChangeGroupByCategory,
     ChangeHoveredPointAction,
+    ColumnFilter,
+    FilterColumnAction,
+    SetFilterAction,
+    SetFiltersAction,
+    SetShapeOverrideAction,
+    ToggleShapeHiddenAction,
     ChangeMousePositionAction,
     ChangeSelectedDatasetAction,
     ChangeSelectionAction,
@@ -89,6 +104,10 @@ export const initialState: SelectionStateBranch = {
         type: "",
     },
     filterExclude: [] as string[],
+    filters: [] as ColumnFilter[],
+    shapeBy: "",
+    shapeOverrides: {} as SelectionStateBranch["shapeOverrides"],
+    shapeHidden: {} as SelectionStateBranch["shapeHidden"],
     galleryCollapsed: true,
     hoveredCardId: "",
     hoveredPointData: null,
@@ -356,6 +375,91 @@ const actionToConfigMap: TypeToDescriptionMap = {
             ...state,
             filterExclude: action.payload,
         }),
+    },
+    [SET_FILTER]: {
+        accepts: (action: Action): action is SetFilterAction => action.type === SET_FILTER,
+        perform: (state: SelectionStateBranch, action: SetFilterAction) => ({
+            ...state,
+            filters: [
+                ...state.filters.filter((f) => f.column !== action.payload.column),
+                action.payload,
+            ],
+        }),
+    },
+    [SET_FILTERS]: {
+        accepts: (action: Action): action is SetFiltersAction => action.type === SET_FILTERS,
+        perform: (state: SelectionStateBranch, action: SetFiltersAction) => ({
+            ...state,
+            filters: action.payload,
+        }),
+    },
+    [REMOVE_FILTER]: {
+        accepts: (action: Action): action is FilterColumnAction => action.type === REMOVE_FILTER,
+        perform: (state: SelectionStateBranch, action: FilterColumnAction) => ({
+            ...state,
+            filters: state.filters.filter((f) => f.column !== action.payload),
+        }),
+    },
+    [TOGGLE_FILTER_ENABLED]: {
+        accepts: (action: Action): action is FilterColumnAction =>
+            action.type === TOGGLE_FILTER_ENABLED,
+        perform: (state: SelectionStateBranch, action: FilterColumnAction) => ({
+            ...state,
+            filters: state.filters.map((f) =>
+                f.column === action.payload ? { ...f, enabled: !f.enabled } : f
+            ),
+        }),
+    },
+    [SET_SHAPE_OVERRIDE]: {
+        accepts: (action: Action): action is SetShapeOverrideAction =>
+            action.type === SET_SHAPE_OVERRIDE,
+        perform: (state: SelectionStateBranch, action: SetShapeOverrideAction) => {
+            const { column, category, shape } = action.payload;
+            const rest = omit(state.shapeOverrides[column], category);
+            return {
+                ...state,
+                shapeOverrides: {
+                    ...state.shapeOverrides,
+                    [column]: shape ? { ...rest, [category]: shape } : rest,
+                },
+            };
+        },
+    },
+    [TOGGLE_SHAPE_HIDDEN]: {
+        accepts: (action: Action): action is ToggleShapeHiddenAction =>
+            action.type === TOGGLE_SHAPE_HIDDEN,
+        perform: (state: SelectionStateBranch, action: ToggleShapeHiddenAction) => {
+            const { column, category } = action.payload;
+            const hidden = state.shapeHidden[column] ?? [];
+            return {
+                ...state,
+                shapeHidden: {
+                    ...state.shapeHidden,
+                    [column]: hidden.includes(category)
+                        ? hidden.filter((c) => c !== category)
+                        : [...hidden, category],
+                },
+            };
+        },
+    },
+    [SHOW_ALL_SHAPE_CATEGORIES]: {
+        accepts: (action: Action): action is FilterColumnAction =>
+            action.type === SHOW_ALL_SHAPE_CATEGORIES,
+        perform: (state: SelectionStateBranch, action: FilterColumnAction) => ({
+            ...state,
+            shapeHidden: omit(state.shapeHidden, action.payload),
+        }),
+    },
+    [RESET_SHAPE_OVERRIDES]: {
+        accepts: (action: Action): action is FilterColumnAction =>
+            action.type === RESET_SHAPE_OVERRIDES,
+        perform: (state: SelectionStateBranch, action: FilterColumnAction) => {
+            return { ...state, shapeOverrides: omit(state.shapeOverrides, action.payload) };
+        },
+    },
+    [CLEAR_FILTERS]: {
+        accepts: (action: Action): action is Action => action.type === CLEAR_FILTERS,
+        perform: (state: SelectionStateBranch) => ({ ...state, filters: [] }),
     },
     [TOGGLE_APPLY_SELECTION_SET_COLOR]: {
         accepts: (action: Action): action is BoolToggleAction =>

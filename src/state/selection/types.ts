@@ -12,6 +12,14 @@ export interface SelectionStateBranch {
     csvUrl: string;
     downloadConfig: DownloadConfig;
     filterExclude: string[];
+    /** Persistent filters, independent of groupBy. AND across entries, OR within `values`. */
+    filters: ColumnFilter[];
+    /** Metadata column whose categories set marker shape ("" = all circles). */
+    shapeBy: string;
+    /** Custom marker shapes, by column then category name, so they outlive filtering and regrouping. */
+    shapeOverrides: { [column: string]: { [category: string]: string } };
+    /** Categories hidden from the plot through the Shape By legend, by column; independent of filters and shapes. */
+    shapeHidden: { [column: string]: string[] };
     galleryCollapsed: boolean;
     hoveredCardId: string;
     hoveredPointData: SelectedPointData | null;
@@ -41,6 +49,14 @@ export interface SelectionStateBranch {
     downloadRoot: string;
     volumeViewerDataRoot: string;
     alignActive: boolean;
+}
+
+export interface ColumnFilter {
+    column: string;
+    values?: string[];
+    min?: number;
+    max?: number;
+    enabled: boolean;
 }
 
 export interface CellDataArrays {
@@ -258,5 +274,30 @@ export interface SetPointRadiusAction {
 
 export interface SetPointOpacityAction {
     payload: number;
+    type: string;
+}
+
+export interface SetFilterAction {
+    payload: ColumnFilter;
+    type: string;
+}
+
+export interface FilterColumnAction {
+    payload: string;
+    type: string;
+}
+
+export interface SetFiltersAction {
+    payload: ColumnFilter[];
+    type: string;
+}
+
+export interface SetShapeOverrideAction {
+    payload: { column: string; category: string; shape?: string };
+    type: string;
+}
+
+export interface ToggleShapeHiddenAction {
+    payload: { column: string; category: string };
     type: string;
 }

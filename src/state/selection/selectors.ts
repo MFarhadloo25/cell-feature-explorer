@@ -27,9 +27,19 @@ import {
 import { NumberOrString, SelectedGroups, State } from "../types";
 import { findFeature, getCategoryString, getFileInfoDatumFromCellId, sortNumeric } from "../util";
 
+import {
+    combineMasks,
+    computeAvailableValues,
+    computeHiddenMask,
+    computeRowMask,
+    computeTrackInfo,
+    summarizeMask,
+} from "./filters";
+import { DEFAULT_SHAPE, defaultShapeAt, ShapeLegendRow } from "./shapes";
 import { MISSING_CATEGORY_COLOR, MISSING_CATEGORY_LABEL } from "./constants";
 import {
     ColorForPlot,
+    ColumnFilter,
     DownloadConfig,
     LassoOrBoxSelectPointData,
     MainPlotSettings,
@@ -65,6 +75,9 @@ export const getPointOpacity = (state: State): number => state.selection.pointOp
 export const getSelectionSetColors = (state: State): { [key: string]: string } =>
     state.selection.selectedGroupColors;
 export const getFiltersToExclude = (state: State): string[] => state.selection.filterExclude;
+export const getShapeBy = (state: State): string => state.selection.shapeBy;
+export const getShapeOverrides = (state: State) => state.selection.shapeOverrides;
+export const getShapeHidden = (state: State) => state.selection.shapeHidden;
 export const getSelected3DCell = (state: State): string => state.selection.cellSelectedFor3D;
 export const getApplyColorToSelections = (state: State): boolean =>
     state.selection.applySelectionSetColoring;
@@ -373,6 +386,53 @@ export const getColorByCategoryCounts = createSelector(
 // FILTERED DATA
 // =============
 
+export const getFilters = (state: State): ColumnFilter[] => state.selection.filters;
+
+/** Track key per row and timepoint counts per track; only recomputed when the data changes. */
+export const getTrackInfo = createSelector(
+    [getPerCellDataForPlot, getMeasuredFeaturesDefs],
+    computeTrackInfo
+);
+
+/** Per-row pass/fail for the persistent filters, or null when none are active. */
+export const getFilterRowMask = createSelector(
+    [getPerCellDataForPlot, getMeasuredFeaturesDefs, getFilters, getTrackInfo],
+    computeRowMask
+);
+
+/** Per filtered column, the values still available given the other filters (in the column's option order). */
+export const getAvailableFilterValues = createSelector(
+    [getPerCellDataForPlot, getMeasuredFeaturesDefs, getFilters, getTrackInfo],
+    (data, defs, filters, trackInfo): { [column: string]: string[] } => {
+        const result: { [column: string]: string[] } = {};
+        filters.forEach(({ column }) => {
+            const def = defs.find((d) => d.key === column);
+            if (!def?.discrete || result[column]) {
+                return;
+            }
+            const available = computeAvailableValues(data, defs, filters, trackInfo, column);
+            result[column] = Object.keys(def.options)
+                .map((key) => getCategoryString(def, key))
+                .filter((name) => available.has(name));
+        });
+        return result;
+    }
+);
+
+/** Rows hidden through the Shape By legend; separate from filters so options and counts for filters ignore it. */
+const getHiddenMask = createSelector(
+    [getPerCellDataForPlot, getMeasuredFeaturesDefs, getShapeBy, getShapeHidden],
+    (data, defs, column, hidden) => computeHiddenMask(data, defs, column, hidden[column])
+);
+
+/** Rows that are both eligible under the filters and not hidden; this is what gets plotted. */
+export const getRowMask = createSelector([getFilterRowMask, getHiddenMask], combineMasks);
+
+export const getFilterSummary = createSelector(
+    [getFilterRowMask, getTrackInfo, getPerCellDataForPlot],
+    (mask, trackInfo, data) => summarizeMask(mask, trackInfo, data?.labels?.cellIds?.length ?? 0)
+);
+
 export const getFilteredCellData = createSelector(
     /**
      * Takes the full data and filters it based on the selected checkboxes and
@@ -384,15 +444,18 @@ export const getFilteredCellData = createSelector(
         getPerCellDataForPlot,
         getGroupByCategory,
         getGroupingCategoryNamesAsArray,
+        getRowMask,
     ],
     (
         measuredFeatureKeys,
         filtersToExclude,
         perCellDataForPlot: DataForPlot,
         categoryKey: string,
-        groupingNames
+        groupingNames,
+        rowMask
     ): DataForPlot => {
-        if (!filtersToExclude.length) {
+        // No cell ids yet means the dataset has not loaded, so there is nothing to filter.
+        if ((!filtersToExclude.length && !rowMask) || !perCellDataForPlot.labels?.cellIds) {
             return {
                 ...perCellDataForPlot,
                 labels: {
@@ -409,7 +472,7 @@ export const getFilteredCellData = createSelector(
         const indices: number[] = [];
         for (let i = 0; i < perCellDataForPlot.labels.cellIds.length; i++) {
             const categoryName: string = groupingNames[i];
-            if (!includes(filtersToExclude, categoryName)) {
+            if (!includes(filtersToExclude, categoryName) && (!rowMask || rowMask[i])) {
                 const cellId = perCellDataForPlot.labels.cellIds[i];
                 cellIds.push(cellId);
                 categoryNameArray.push(categoryName);
@@ -499,6 +562,66 @@ export const getFilteredColorByValues = createSelector(
             [categoryToGroupBy]: metaData.labels[categoryToGroupBy],
         };
         return options[categoryToColorBy] || [];
+    }
+);
+
+// SHAPE BY
+// ========
+
+/**
+ * One row per category of the Shape By column that exists under the active
+ * filters (option order). Counts ignore legend visibility, so hidden
+ * categories stay listed and can be reactivated.
+ */
+export const getShapeLegend = createSelector(
+    [
+        getShapeBy,
+        getMeasuredFeaturesDefs,
+        getShapeOverrides,
+        getShapeHidden,
+        getPerCellDataForPlot,
+        getFilterRowMask,
+    ],
+    (shapeBy, defs, overrides, hidden, data, filterMask): ShapeLegendRow[] => {
+        const def = defs.find((d) => d.key === shapeBy);
+        if (!def?.discrete) {
+            return [];
+        }
+        const counts: { [key: string]: number } = {};
+        (data.values?.[shapeBy] ?? []).forEach((v, i) => {
+            if (v !== null && (!filterMask || filterMask[i])) {
+                counts[v] = (counts[v] ?? 0) + 1;
+            }
+        });
+        const hiddenNames = new Set(hidden[shapeBy]);
+        return Object.keys(def.options)
+            .map((key, position) => {
+                const name = getCategoryString(def, key);
+                const custom = overrides[shapeBy]?.[name];
+                return {
+                    key,
+                    name,
+                    shape: custom ?? defaultShapeAt(position),
+                    isCustom: !!custom,
+                    visible: !hiddenNames.has(name),
+                    total: counts[key] ?? 0,
+                };
+            })
+            .filter((row) => row.total > 0);
+    }
+);
+
+/** Marker symbol per filtered row, aligned with the plot's x/y arrays; undefined when Shape By is off. */
+export const getFilteredShapeValues = createSelector(
+    [getShapeLegend, getShapeBy, getFilteredCellData],
+    (legend, shapeBy, filteredData): string[] | undefined => {
+        if (!legend.length) {
+            return undefined;
+        }
+        const shapeByKey = new Map(legend.map((row) => [row.key, row.shape]));
+        return (filteredData.values?.[shapeBy] ?? []).map(
+            (v) => (v === null ? undefined : shapeByKey.get(String(v))) ?? DEFAULT_SHAPE
+        );
     }
 );
 

@@ -4,6 +4,7 @@ import React from "react";
 import { PanelData } from "../../containers/ColorByMenu/types";
 import { DownloadConfig } from "../../state/selection/types";
 import InteractiveRow from "../InteractiveRow";
+import LimitedList from "../LimitedList";
 
 interface InteractiveLegendProps {
     showTooltips: boolean;
@@ -17,6 +18,10 @@ interface InteractiveLegendProps {
     setColor?: (index: number, color: string | undefined) => void;
     onBarClicked?: (clicked: CheckboxChangeEvent) => void;
     handleCloseSelectionSet?: (id: number | string) => void;
+    /** Rows shown before "Show all"; omit to always show every row. */
+    maxVisible?: number;
+    /** Id for remembering this legend's Show all state. */
+    legendId?: string;
 }
 
 const InteractiveLegend: React.FunctionComponent<InteractiveLegendProps> = (props) => {
@@ -32,11 +37,19 @@ const InteractiveLegend: React.FunctionComponent<InteractiveLegendProps> = (prop
         onBarClicked,
         setColor,
         panelData,
+        maxVisible,
+        legendId = "legend",
     } = props;
+    const limit = maxVisible ?? Infinity;
     return (
         <React.Fragment>
-            {panelData.map((item, index) => {
-                return (
+            <LimitedList
+                id={legendId}
+                items={panelData}
+                getTotal={(item) => item.total}
+                getName={maxVisible === undefined ? undefined : (item) => item.name}
+                limit={limit}
+                render={(item, index) => (
                     <InteractiveRow
                         key={item.id}
                         showTooltips={showTooltips}
@@ -56,8 +69,8 @@ const InteractiveLegend: React.FunctionComponent<InteractiveLegendProps> = (prop
                         downloadConfig={downloadConfig}
                         downloadRoot={downloadRoot}
                     />
-                );
-            })}
+                )}
+            />
         </React.Fragment>
     );
 };

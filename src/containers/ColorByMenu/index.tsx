@@ -9,6 +9,10 @@ import FeatureSelectDropdown from "../../components/FeatureSelectDropdown";
 import InteractiveLegend from "../../components/InteractiveLegend";
 import ColorBySwitcher from "../../components/ColorBySwitcher";
 import ColorLegendRow from "../../components/ColorLegend";
+import LimitedList from "../../components/LimitedList";
+import ActiveFilters from "../../components/ActiveFilters";
+import CollapsiblePanel from "../../components/CollapsiblePanel";
+import ShapeBy from "../../components/ShapeBy";
 import ConnectByControl from "../../components/ConnectByControl";
 import {
     COLOR_BY_SELECTOR,
@@ -89,6 +93,8 @@ interface PropsFromApp {
 
 type ColorByMenuProps = PropsFromApp & PropsFromState & DispatchProps;
 
+const LEGEND_MAX_VISIBLE = 10;
+
 class ColorByMenu extends React.Component<ColorByMenuProps> {
     // submenu keys of first level
 
@@ -140,9 +146,16 @@ class ColorByMenu extends React.Component<ColorByMenuProps> {
         handleFilterByCategoryName(keys);
     }
 
-    public onActivePanelChange(value: string | string[]) {
-        const { onPanelClicked } = this.props;
-        onPanelClicked(value as string[]);
+    /** Each panel has its own Collapse (other controls sit between them); merge its state into the shared open keys. */
+    public onActivePanelChange(panelKey: string) {
+        return (value: string | string[]) => {
+            const { onPanelClicked, openKeys } = this.props;
+            const isOpen = ([] as string[]).concat(value).includes(panelKey);
+            onPanelClicked([
+                ...openKeys.filter((key) => key !== panelKey),
+                ...(isOpen ? [panelKey] : []),
+            ]);
+        };
     }
 
     public renderSelectionPanel() {
@@ -258,7 +271,11 @@ class ColorByMenu extends React.Component<ColorByMenuProps> {
                     <ConnectByControl />
                 </Row>
                 <div className={styles.interactiveLegendContainer}>
-                    <div>
+                    <CollapsiblePanel
+                        id="group-by-legend"
+                        title="Group by legend"
+                        summary={`${groupBy}: ${interactivePanelData.length} categories`}
+                    >
                         <div className={styles.interactiveLegendHeader}>
                             <Checkbox
                                 indeterminate={isInIndeterminateState}
@@ -272,6 +289,8 @@ class ColorByMenu extends React.Component<ColorByMenuProps> {
 
                         <InteractiveLegend
                             closeable={false}
+                            maxVisible={LEGEND_MAX_VISIBLE}
+                            legendId="group-by-legend"
                             showTooltips={true}
                             panelData={interactivePanelData}
                             downloadUrls={downloadUrls}
@@ -288,32 +307,44 @@ class ColorByMenu extends React.Component<ColorByMenuProps> {
                             onBarClicked={this.onBarClicked}
                             handleDownload={this.onCategorySetDownloadButtonClicked}
                         />
-                    </div>
+                    </CollapsiblePanel>
                     {showColorLegend && (
                         <Row className={styles.featureSelectRow}>
-                            <div className={styles.interactiveLegendHeader}>
-                                <div> Color legend </div>
-                                <span className={styles.label}># of cells</span>
-                            </div>
-                            {colorForPlot.map((ele, index) => {
-                                // Do not allow color picking for the fallback category.
-                                const isFallbackCategory =
-                                    ele.color === MISSING_CATEGORY_COLOR &&
-                                    ele.label === MISSING_CATEGORY_LABEL;
-                                const setColorCallback = isFallbackCategory
-                                    ? undefined
-                                    : (color: string | undefined) =>
-                                          this.setColorWithDebounce(index, color);
-                                return (
-                                    <ColorLegendRow
-                                        color={ele.color}
-                                        name={ele.label}
-                                        key={ele.name}
-                                        total={categoryCounts[index]}
-                                        setColor={setColorCallback}
-                                    />
-                                );
-                            })}
+                            <CollapsiblePanel
+                                id="color-legend"
+                                title="Color legend"
+                                summary={`${colorBy}: ${colorForPlot.length} categories`}
+                            >
+                                <div className={styles.interactiveLegendHeader}>
+                                    <div />
+                                    <span className={styles.label}># of cells</span>
+                                </div>
+                                <LimitedList
+                                    id="color-legend"
+                                    items={colorForPlot}
+                                    getTotal={(_, i) => categoryCounts[i]}
+                                    getName={(ele) => ele.label}
+                                    render={(ele, index) => {
+                                        // Do not allow color picking for the fallback category.
+                                        const isFallbackCategory =
+                                            ele.color === MISSING_CATEGORY_COLOR &&
+                                            ele.label === MISSING_CATEGORY_LABEL;
+                                        const setColorCallback = isFallbackCategory
+                                            ? undefined
+                                            : (color: string | undefined) =>
+                                                  this.setColorWithDebounce(index, color);
+                                        return (
+                                            <ColorLegendRow
+                                                color={ele.color}
+                                                name={ele.label}
+                                                key={ele.name}
+                                                total={categoryCounts[index]}
+                                                setColor={setColorCallback}
+                                            />
+                                        );
+                                    }}
+                                />
+                            </CollapsiblePanel>
                         </Row>
                     )}
                 </div>
@@ -321,22 +352,33 @@ class ColorByMenu extends React.Component<ColorByMenuProps> {
         );
     }
 
-    public render() {
-        const { defaultActiveKey, openKeys, panelKeys } = this.props;
+    private renderPanel(panelKey: string, header: string, content: React.ReactNode) {
         return (
             <Collapse
                 className={styles.collapse}
-                defaultActiveKey={defaultActiveKey}
-                activeKey={openKeys}
-                onChange={this.onActivePanelChange}
+                activeKey={this.props.openKeys}
+                onChange={this.onActivePanelChange(panelKey)}
             >
-                <Panel key={panelKeys[0]} header={`Plot configuration`}>
-                    {this.renderTaggedStructuresPanel()}
-                </Panel>
-                <Panel key={panelKeys[1]} header="Selected sets">
-                    {this.renderSelectionPanel()}
+                <Panel key={panelKey} header={header}>
+                    {content}
                 </Panel>
             </Collapse>
+        );
+    }
+
+    public render() {
+        const { panelKeys } = this.props;
+        return (
+            <React.Fragment>
+                {this.renderPanel(
+                    panelKeys[0],
+                    "Plot configuration",
+                    this.renderTaggedStructuresPanel()
+                )}
+                <ActiveFilters />
+                <ShapeBy />
+                {this.renderPanel(panelKeys[1], "Selected sets", this.renderSelectionPanel())}
+            </React.Fragment>
         );
     }
 }

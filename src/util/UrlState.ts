@@ -5,6 +5,7 @@ import {
     isEmpty,
     isNaN,
     isNil,
+    isPlainObject,
     isString,
     map,
     mergeWith,
@@ -18,6 +19,7 @@ import {
     COLOR_BY_SELECTOR,
     GROUP_BY_KEY,
     HEX_COLOR_REGEX,
+    SHAPE_BY_SELECTOR,
     X_AXIS_ID,
     Y_AXIS_ID,
 } from "../constants";
@@ -41,9 +43,11 @@ import {
     setShowConnectLines,
     toggleGallery,
     setConnectLineOpacity,
+    setFilters,
+    setShapeOverride,
 } from "../state/selection/actions";
 import { initialState } from "../state/selection/reducer";
-import type { SelectionStateBranch } from "../state/selection/types";
+import type { ColumnFilter, SelectionStateBranch } from "../state/selection/types";
 
 export enum URLSearchParam {
     cellSelectedFor3D = "cellSelectedFor3D",
@@ -66,6 +70,9 @@ export enum URLSearchParam {
     colorOverrides = "colorOverrides",
     plotPointRadius = "ptRadius",
     plotPointOpacity = "ptOpacity",
+    filters = "filters",
+    shapeBy = "shapeBy",
+    shapeOverrides = "shapeOverrides",
 }
 
 type StateValue = any; // types are narrowed in mappings
@@ -189,6 +196,44 @@ export default class UrlState {
         return param.replace(/(-)+$/g, ""); // remove trailing `-` characters
     }
 
+    /** Filters travel as one JSON param; malformed entries are dropped rather than throwing. */
+    private static parseFiltersParam(param: string): ColumnFilter[] {
+        try {
+            const parsed = JSON.parse(param);
+            return (Array.isArray(parsed) ? parsed : [])
+                .filter((f) => f && typeof f.column === "string")
+                .map((f) => ({
+                    column: f.column,
+                    values: Array.isArray(f.values) ? f.values.map(String) : undefined,
+                    min: isFinite(Number(f.min)) && f.min !== undefined ? Number(f.min) : undefined,
+                    max: isFinite(Number(f.max)) && f.max !== undefined ? Number(f.max) : undefined,
+                    enabled: f.enabled !== false,
+                }));
+        } catch {
+            return [];
+        }
+    }
+
+    /** Shapes travel as one JSON param ({column: {category: shape}}); malformed input is dropped. */
+    private static parseShapeOverridesParam(param: string): SelectionStateBranch["shapeOverrides"] {
+        try {
+            const parsed = JSON.parse(param);
+            const result: SelectionStateBranch["shapeOverrides"] = {};
+            Object.entries(isPlainObject(parsed) ? parsed : {}).forEach(([column, shapes]) => {
+                if (isPlainObject(shapes)) {
+                    result[column] = Object.fromEntries(
+                        Object.entries(shapes as object)
+                            .filter(([, shape]) => typeof shape === "string")
+                            .map(([category, shape]) => [category, shape as string])
+                    );
+                }
+            });
+            return result;
+        } catch {
+            return {};
+        }
+    }
+
     private static urlParamToActionCreatorMap: URLSearchParamToActionCreatorMap = {
         [URLSearchParam.cellSelectedFor3D]: (cellId, params) => {
             const selectCellFor3DAction = selectCellFor3DViewer({ id: String(cellId) });
@@ -234,6 +279,16 @@ export default class UrlState {
         },
         [URLSearchParam.plotPointRadius]: (pointRadius) => setPointRadius(Number(pointRadius)),
         [URLSearchParam.plotPointOpacity]: (pointOpacity) => setPointOpacity(Number(pointOpacity)),
+        [URLSearchParam.filters]: (filters) =>
+            setFilters(UrlState.parseFiltersParam(String(filters))),
+        [URLSearchParam.shapeBy]: (shapeBy) => changeAxis(SHAPE_BY_SELECTOR, String(shapeBy)),
+        [URLSearchParam.shapeOverrides]: (overrides) =>
+            Object.entries(UrlState.parseShapeOverridesParam(String(overrides))).flatMap(
+                ([column, shapes]) =>
+                    Object.entries(shapes).map(([category, shape]) =>
+                        setShapeOverride({ column, category, shape })
+                    )
+            ),
     };
 
     private static urlParamToStateMap: URLSearchParamToStateMap = {
@@ -298,6 +353,13 @@ export default class UrlState {
         [URLSearchParam.plotPointOpacity]: (pointOpacity) => ({
             pointOpacity: Number(pointOpacity),
         }),
+        [URLSearchParam.filters]: (filters) => ({
+            filters: UrlState.parseFiltersParam(String(filters)),
+        }),
+        [URLSearchParam.shapeBy]: (shapeBy) => ({ [SHAPE_BY_SELECTOR]: String(shapeBy) }),
+        [URLSearchParam.shapeOverrides]: (overrides) => ({
+            shapeOverrides: UrlState.parseShapeOverridesParam(String(overrides)),
+        }),
     };
 
     private static stateToUrlParamMap: StateToUrlSearchParamMap = {
@@ -334,6 +396,9 @@ export default class UrlState {
         }),
         pointRadius: (value) => ({ [URLSearchParam.plotPointRadius]: String(value) }),
         pointOpacity: (value) => ({ [URLSearchParam.plotPointOpacity]: String(value) }),
+        filters: (value: ColumnFilter[]) => ({ [URLSearchParam.filters]: JSON.stringify(value) }),
+        [SHAPE_BY_SELECTOR]: (value) => ({ [URLSearchParam.shapeBy]: String(value) }),
+        shapeOverrides: (value) => ({ [URLSearchParam.shapeOverrides]: JSON.stringify(value) }),
     };
 
     private static valueIsMeaningfulToSerialize(selection: any): boolean {
@@ -345,7 +410,7 @@ export default class UrlState {
             return true;
         }
 
-        if (Array.isArray(selection) || isString(selection)) {
+        if (Array.isArray(selection) || isString(selection) || isPlainObject(selection)) {
             return !isEmpty(selection);
         }
 
