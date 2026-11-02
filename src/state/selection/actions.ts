@@ -17,6 +17,11 @@ import {
     SYNC_STATE_WITH_URL,
     TOGGLE_APPLY_SELECTION_SET_COLOR,
     TOGGLE_FILTER_BY_CATEGORY_NAME,
+    SET_FILTER,
+    SET_FILTERS,
+    REMOVE_FILTER,
+    TOGGLE_FILTER_ENABLED,
+    CLEAR_FILTERS,
     TOGGLE_GALLERY_OPEN_CLOSE,
     CHANGE_DATASET,
     RECEIVE_FILE_INFO,
@@ -69,6 +74,10 @@ import {
     SetPointOpacityAction,
     SetPointRadiusAction,
     SyncStateWithURLAction,
+    ColumnFilter,
+    FilterColumnAction,
+    SetFilterAction,
+    SetFiltersAction,
 } from "./types";
 
 export function changeAxis(axisId: string, payload: string): SelectAxisAction {
@@ -209,6 +218,27 @@ export function toggleFilterByCategoryName(payload: string): ChangeSelectionActi
         payload,
         type: TOGGLE_FILTER_BY_CATEGORY_NAME,
     };
+}
+
+/** Adds a filter, or replaces the existing filter on the same column. */
+export function setFilter(payload: ColumnFilter): SetFilterAction {
+    return { payload, type: SET_FILTER };
+}
+
+export function setFilters(payload: ColumnFilter[]): SetFiltersAction {
+    return { payload, type: SET_FILTERS };
+}
+
+export function removeFilter(payload: string): FilterColumnAction {
+    return { payload, type: REMOVE_FILTER };
+}
+
+export function toggleFilterEnabled(payload: string): FilterColumnAction {
+    return { payload, type: TOGGLE_FILTER_ENABLED };
+}
+
+export function clearFilters(): { type: string } {
+    return { type: CLEAR_FILTERS };
 }
 
 export function selectCellFor3DViewer(payload: { id: string }): SelectPointAction {

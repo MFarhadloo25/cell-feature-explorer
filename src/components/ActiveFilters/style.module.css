@@ -1,0 +1,43 @@
+.container {
+    padding: 8px 16px;
+    /* Long names wrap instead of widening the sidebar and causing a horizontal scrollbar. */
+    overflow-wrap: anywhere;
+    min-width: 0;
+}
+
+.header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 4px 8px;
+    font-weight: bold;
+}
+
+.summary {
+    margin: 4px 0;
+    opacity: 0.8;
+}
+
+.filterRow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 4px 0;
+}
+
+.filterLabel {
+    min-width: 90px;
+}
+
+.warning {
+    color: #d48806;
+}
+
+.addRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+}

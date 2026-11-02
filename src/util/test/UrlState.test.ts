@@ -20,6 +20,25 @@ import { selectedCellFileInfo } from "../../state/test/mocks";
 import UrlState, { URLSearchParam } from "../UrlState";
 
 describe("UrlState utility class", () => {
+    describe("filters param", () => {
+        const filters = [
+            { column: "gene", values: ["ABCA1", "TP53"], enabled: true },
+            { column: "__timepointCoverage", min: 5, enabled: false },
+        ];
+
+        it("round-trips through the URL", () => {
+            const params = UrlState.toUrlSearchParameterMap({ filters });
+            expect(UrlState.toAppState(params).filters).toEqual([
+                { ...filters[0], min: undefined, max: undefined },
+                { ...filters[1], values: undefined, max: undefined },
+            ]);
+        });
+
+        it("drops malformed values instead of throwing", () => {
+            expect(UrlState.toAppState({ [URLSearchParam.filters]: "not json" }).filters).toEqual([]);
+        });
+    });
+
     describe("toAppState", () => {
         it("maps URL search params directly to the shape of the selection state branch", () => {
             expect(
