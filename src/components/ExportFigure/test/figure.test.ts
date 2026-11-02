@@ -24,6 +24,7 @@ const build = (options = {}, legendSections: any[] = []) =>
         layout: { annotations: [{}] as any, xaxis: {}, yaxis: {} },
         xTitle: "X",
         yTitle: "Y",
+        colorByTitle: "Timepoint",
         legendSections,
         options: { ...DEFAULT_EXPORT_OPTIONS, ...options },
     });
@@ -49,6 +50,28 @@ describe("export figure", () => {
         const { data } = build({}, [{ title: "Color", entries }]);
         expect(data.length).toBe(2 + MAX_LEGEND_ENTRIES);
         expect(data[2]).toMatchObject({ name: "c0", legendgroup: "Color", showlegend: true });
+    });
+
+    it("adds one titled color bar for a numeric color-by, and only when the legend is on", () => {
+        const numeric = (opts = {}) =>
+            buildExportFigure({
+                traces: [
+                    { type: "scattergl", x: [1, 2], y: [1, 2], marker: { color: [0, 5] } } as any,
+                    { type: "scattergl", x: [1], y: [1], marker: { color: [3] } } as any,
+                ],
+                layout: {},
+                xTitle: "X",
+                yTitle: "Y",
+                colorByTitle: "Timepoint",
+                legendSections: [],
+                options: { ...DEFAULT_EXPORT_OPTIONS, ...opts },
+            });
+        const { data, layout } = numeric();
+        expect(data.filter((t) => t.marker.showscale).length).toBe(1);
+        expect(data[0].marker.colorbar.title.text).toBe("Timepoint");
+        expect((layout as any).legend.y).toBe(0.55);
+        expect(numeric({ includeLegend: false }).data.some((t) => t.marker.showscale)).toBe(false);
+        expect(build().data.some((t) => t.marker?.showscale)).toBe(false);
     });
 
     it("sets pixel size from inches and dpi, and uses a white or dark theme", () => {

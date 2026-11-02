@@ -754,3 +754,8 @@ export const getExportLegendSections = createSelector(
         return sections;
     }
 );
+
+export const getColorByTitle = createSelector(
+    [getColorBySelection, getMeasuredFeaturesDefs],
+    (colorBy, defs): string => defs.find((d) => d.key === colorBy)?.displayName ?? String(colorBy)
+);

@@ -18,12 +18,13 @@ interface ExportFigureProps {
     layout: Partial<Layout>;
     xTitle: string;
     yTitle: string;
+    colorByTitle: string;
     legendSections: LegendSection[];
     className?: string;
 }
 
 const ExportFigure: React.FC<ExportFigureProps> = (props) => {
-    const { traces, layout, xTitle, yTitle, legendSections, className } = props;
+    const { traces, layout, xTitle, yTitle, colorByTitle, legendSections, className } = props;
     const [open, setOpen] = useState(false);
     const [busy, setBusy] = useState(false);
     const [options, setOptions] = useState<ExportOptions>(DEFAULT_EXPORT_OPTIONS);
@@ -45,6 +46,7 @@ const ExportFigure: React.FC<ExportFigureProps> = (props) => {
                 layout,
                 xTitle,
                 yTitle,
+                colorByTitle,
                 legendSections,
                 options,
             });

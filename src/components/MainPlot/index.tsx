@@ -36,6 +36,7 @@ interface MainPlotProps {
     yAxisRange?: [number, number];
     xTitle: string;
     yTitle: string;
+    colorByTitle: string;
     legendSections: LegendSection[];
 }
 
@@ -297,6 +298,7 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
                 layout={layout}
                 xTitle={props.xTitle}
                 yTitle={props.yTitle}
+                colorByTitle={props.colorByTitle}
                 legendSections={props.legendSections}
             />
             <Plot

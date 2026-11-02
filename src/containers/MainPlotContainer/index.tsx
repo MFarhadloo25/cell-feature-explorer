@@ -47,6 +47,7 @@ import {
     getXAxisRange,
     getYAxisRange,
     getAnnotations,
+    getColorByTitle,
     getExportLegendSections,
     getConnectByFeatureDisplayName,
     getFormattedHoveredConnectByFeatureValue,
@@ -64,6 +65,7 @@ const MAX_GENERATED_THUMBNAILS = 250;
 interface PropsFromState {
     annotations: PlotlyAnnotation[];
     legendSections: LegendSection[];
+    colorByTitle: string;
     categoricalFeatures: string[];
     clickedPoints: string[];
     filtersToExclude: string[];
@@ -306,6 +308,7 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
             xAxisRange,
             yAxisRange,
             legendSections,
+            colorByTitle,
             xDisplayName,
             yDisplayName,
         } = this.props;
@@ -378,6 +381,7 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
                         yAxisRange={yAxisRange}
                         xTitle={xDisplayName}
                         yTitle={yDisplayName}
+                        colorByTitle={colorByTitle}
                         legendSections={legendSections}
                     />
                 </div>
@@ -390,6 +394,7 @@ function mapStateToProps(state: State): PropsFromState {
     return {
         annotations: getAnnotations(state),
         legendSections: getExportLegendSections(state),
+        colorByTitle: getColorByTitle(state),
         clickedPoints: selectionStateBranch.selectors.getClickedScatterPoints(state),
         categoricalFeatures: metadataStateBranch.selectors.getCategoricalFeatureKeys(state),
         filtersToExclude: selectionStateBranch.selectors.getFiltersToExclude(state),

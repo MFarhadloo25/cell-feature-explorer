@@ -45,6 +45,7 @@ export const MAX_LEGEND_ENTRIES = 40;
 export const MAX_SIDE_PX = 16384;
 export const MAX_MEGAPIXELS = 200;
 
+const isNumber = (v: unknown) => typeof v === "number";
 const CSS_DPI = 96;
 const PT_TO_PX = CSS_DPI / 72;
 
@@ -76,6 +77,8 @@ interface BuildArgs {
     layout: Partial<Layout>;
     xTitle: string;
     yTitle: string;
+    /** Name of the color-by column, used to title the color bar. */
+    colorByTitle: string;
     legendSections: LegendSection[];
     options: ExportOptions;
 }
@@ -90,6 +93,7 @@ export function buildExportFigure({
     layout,
     xTitle,
     yTitle,
+    colorByTitle,
     legendSections,
     options,
 }: BuildArgs) {
@@ -98,10 +102,32 @@ export function buildExportFigure({
     const grid = options.whiteBackground ? "#e5e5e5" : "#333333";
     const fontPx = options.fontSize * PT_TO_PX;
 
+    let hasColorbar = false;
     const data: any[] = traces.map((trace: any) => {
         const out = { ...trace, type: trace.type === "scattergl" ? "scatter" : trace.type };
         if (typeof trace.marker?.size === "number") {
             out.marker = { ...trace.marker, size: trace.marker.size * options.pointScale };
+        }
+        // Numeric color-by: Plotly maps the values onto its colorscale, so show that scale as a color bar.
+        const numeric = Array.isArray(trace.marker?.color) && trace.marker.color.some(isNumber);
+        if (options.includeLegend && numeric && !hasColorbar) {
+            hasColorbar = true;
+            out.marker = {
+                ...out.marker,
+                showscale: true,
+                colorbar: {
+                    title: { text: colorByTitle, side: "right", font: { size: fontPx, color: fg } },
+                    tickfont: { size: fontPx, color: fg },
+                    outlinewidth: 0,
+                    thickness: 20,
+                    // Above the legend, which sits in the same right-hand margin.
+                    x: 1.02,
+                    xanchor: "left",
+                    y: 1,
+                    yanchor: "top",
+                    len: 0.4,
+                },
+            };
         }
         // Group-by traces are split by the groupby transform; their legend entries are the group names.
         out.showlegend = options.includeLegend && !!trace.transforms?.length;
@@ -155,6 +181,7 @@ export function buildExportFigure({
         margin: { l: 90, r: 40, t: options.title ? 80 : 30, b: 80 },
         showlegend: options.includeLegend && (hasGroupLegend || legendSections.length > 0),
         legend: {
+            ...(hasColorbar ? { x: 1.02, xanchor: "left", y: 0.55, yanchor: "top" } : {}),
             font: { size: fontPx, color: fg },
             bgcolor: "rgba(0,0,0,0)",
             itemsizing: "constant",
