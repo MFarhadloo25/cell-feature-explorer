@@ -54,8 +54,8 @@ const PLOT_CONFIG: Partial<Config> = {
     responsive: true,
     displayModeBar: true,
     displaylogo: false,
-    // Camera button in the mode bar: PNG at 4x the on-screen pixels.
-    toImageButtonOptions: { format: "png", filename: "cell-feature-explorer", scale: 4 },
+    // Camera button in the mode bar: PNG at 2x the on-screen pixels (4x exceeded WebGL limits and exported a blank image).
+    toImageButtonOptions: { format: "png", filename: "cell-feature-explorer", scale: 2 },
     modeBarButtonsToRemove: [
         "sendDataToCloud",
         "resetScale2d",
@@ -68,6 +68,7 @@ const PLOT_CONFIG: Partial<Config> = {
 const POPUP_ANNOTATION_OFFSET_PX = 60;
 
 const MainPlot: React.FC<MainPlotProps> = (props) => {
+    const resizeObserverRef = React.useRef<ResizeObserver>();
     const [showFullAnnotation, setShowFullAnnotation] = React.useState(true);
     const [height, setHeight] = React.useState(window.innerHeight);
     const [helpTextPos, setHelpTextPos] = React.useState<{ x: number; y: number } | null>(null);
@@ -235,7 +236,16 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
     // Stable — only sets the ref; onAfterPlot handles position computation.
     const handleInitialized = React.useCallback((_figure: any, gd: any) => {
         graphDivRef.current = gd;
+        // Plotly only resizes on window resize; also follow the container (e.g. when the side panel is hidden).
+        resizeObserverRef.current?.disconnect();
+        resizeObserverRef.current = new ResizeObserver(() =>
+            window.dispatchEvent(new Event("resize"))
+        );
+        if (gd.parentElement) {
+            resizeObserverRef.current.observe(gd.parentElement);
+        }
     }, []);
+    React.useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
 
     const { onPointHovered, onPointUnhovered, onGroupSelected, plotDataArray } = props;
     const lastAnnotation = annotations.length > 0 ? annotations[annotations.length - 1] : null;

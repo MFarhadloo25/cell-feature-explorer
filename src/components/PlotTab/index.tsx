@@ -28,10 +28,7 @@ class PlotTab extends React.Component {
     };
 
     public togglePanel = () => {
-        // Plotly only resizes on window resize, so nudge it once the layout has changed.
-        this.setState({ panelHidden: !this.state.panelHidden }, () =>
-            window.dispatchEvent(new Event("resize"))
-        );
+        this.setState({ panelHidden: !this.state.panelHidden });
     };
 
     public render() {
