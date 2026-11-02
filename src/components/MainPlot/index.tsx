@@ -42,16 +42,6 @@ export interface PlotlyAnnotation extends Partial<Annotations> {
     pointIndex: number;
 }
 
-const histogramAxis = {
-    color: GENERAL_PLOT_SETTINGS.textColor,
-    domain: [0.86, 1],
-    hoverformat: "f",
-    linecolor: GENERAL_PLOT_SETTINGS.textColor,
-    showgrid: false,
-    tickcolor: GENERAL_PLOT_SETTINGS.textColor,
-    zeroline: true,
-};
-
 function padAxisRange(range: [number, number]): [number, number] {
     const delta = range[1] - range[0];
     const padding = delta * 0.05;
@@ -140,7 +130,7 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
             const xFrac = ((lastAnn.x as number) - xa.range[0]) / (xa.range[1] - xa.range[0]);
             const xPxLocal =
                 fl.margin.l + xa.domain[0] * plotW + xFrac * (xa.domain[1] - xa.domain[0]) * plotW;
-            // yaxis domain[1]=0.85; SVG origin is top-left so y-data is inverted
+            // yaxis domain[1]=1; SVG origin is top-left so y-data is inverted
             const yDomainTopPx = fl.margin.t + (1 - ya.domain[1]) * plotH;
             const yFrac = ((lastAnn.y as number) - ya.range[0]) / (ya.range[1] - ya.range[0]);
             const yPxLocal = yDomainTopPx + (1 - yFrac) * (ya.domain[1] - ya.domain[0]) * plotH;
@@ -188,7 +178,7 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
     const layout = React.useMemo((): Partial<Layout> => {
         const makeAxis = (type: AxisType, tickConversion: any, range?: [number, number]) => ({
             color: GENERAL_PLOT_SETTINGS.textColor,
-            domain: [0, 0.85],
+            domain: [0, 1],
             hoverformat: ".1f",
             linecolor: GENERAL_PLOT_SETTINGS.textColor,
             showgrid: false,
@@ -215,9 +205,7 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
             paper_bgcolor: GENERAL_PLOT_SETTINGS.backgroundColor,
             plot_bgcolor: GENERAL_PLOT_SETTINGS.backgroundColor,
             xaxis: makeAxis(xAxisType, xTickConversion, xAxisRange && padAxisRange(xAxisRange)),
-            xaxis2: histogramAxis,
             yaxis: makeAxis(yAxisType, yTickConversion, yAxisRange && padAxisRange(yAxisRange)),
-            yaxis2: histogramAxis,
             // Constant value prevents the plot from resetting on
             // selection/annotation changes.
             uirevision: "constant",

@@ -6,7 +6,6 @@ import {
     ARRAY_OF_CELL_IDS_KEY,
     CELL_ID_KEY,
     FOV_ID_KEY,
-    GENERAL_PLOT_SETTINGS,
     GROUP_BY_KEY,
     PALETTE,
     SCATTER_PLOT_NAME,
@@ -482,44 +481,6 @@ function makeLinePlotTrace(data: LinePlotData, settings: MainPlotSettings): Part
     };
 }
 
-function makeHistogramPlotX(data: (number | null)[]) {
-    return {
-        marker: {
-            color: GENERAL_PLOT_SETTINGS.histogramColor,
-            line: {
-                color: GENERAL_PLOT_SETTINGS.textColor,
-                width: 1,
-            },
-        },
-        name: `x histogram`,
-        nbinsx: 60,
-        showlegend: false,
-        // literal typing to avoid a widened type inferred
-        type: "histogram" as const,
-        x: data,
-        yaxis: "y2",
-    };
-}
-
-function makeHistogramPlotY(data: (number | null)[]) {
-    return {
-        marker: {
-            color: GENERAL_PLOT_SETTINGS.histogramColor,
-            line: {
-                color: GENERAL_PLOT_SETTINGS.textColor,
-                width: 1,
-            },
-        },
-        name: `y histogram`,
-        nbinsy: 60,
-        showlegend: false,
-        // literal typing to avoid a widened type inferred
-        type: "histogram" as const,
-        xaxis: "x2",
-        y: data,
-    };
-}
-
 export function makeAnnotations(annotations: AnnotationData[]): PlotlyAnnotation[] {
     return annotations.map((point) => {
         return {
@@ -558,11 +519,7 @@ export const getScatterPlotDataArray = createSelector(
     [composePlotlyData, getMainPlotSettings],
     (allPlotData, mainPlotSettings): Partial<PlotData>[] => {
         const { mainPlotData, selectedGroupPlotData } = allPlotData;
-        let traces = [
-            makeHistogramPlotX(mainPlotData.x),
-            makeHistogramPlotY(mainPlotData.y),
-            makeScatterPlotData(mainPlotData, mainPlotSettings),
-        ];
+        let traces = [makeScatterPlotData(mainPlotData, mainPlotSettings)];
         if (selectedGroupPlotData) {
             traces.push(makeScatterPlotData(selectedGroupPlotData, mainPlotSettings));
         }
