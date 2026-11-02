@@ -47,9 +47,11 @@ import {
     getXAxisRange,
     getYAxisRange,
     getAnnotations,
+    getExportLegendSections,
     getConnectByFeatureDisplayName,
     getFormattedHoveredConnectByFeatureValue,
 } from "./selectors";
+import type { LegendSection } from "../../components/ExportFigure/figure";
 import { getFeatureDefTooltip } from "../../state/selection/selectors";
 import { formatThumbnailSrc } from "../../state/util";
 import { createThumbnailImageSrc } from "../../util/thumbnails";
@@ -61,6 +63,7 @@ const MAX_GENERATED_THUMBNAILS = 250;
 
 interface PropsFromState {
     annotations: PlotlyAnnotation[];
+    legendSections: LegendSection[];
     categoricalFeatures: string[];
     clickedPoints: string[];
     filtersToExclude: string[];
@@ -302,6 +305,9 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
             categoricalFeatures,
             xAxisRange,
             yAxisRange,
+            legendSections,
+            xDisplayName,
+            yDisplayName,
         } = this.props;
         if (plotDataArray.length === 0) {
             return null;
@@ -370,6 +376,9 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
                         yTickConversion={yTickConversion}
                         xAxisRange={xAxisRange}
                         yAxisRange={yAxisRange}
+                        xTitle={xDisplayName}
+                        yTitle={yDisplayName}
+                        legendSections={legendSections}
                     />
                 </div>
             </>
@@ -380,6 +389,7 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
 function mapStateToProps(state: State): PropsFromState {
     return {
         annotations: getAnnotations(state),
+        legendSections: getExportLegendSections(state),
         clickedPoints: selectionStateBranch.selectors.getClickedScatterPoints(state),
         categoricalFeatures: metadataStateBranch.selectors.getCategoricalFeatureKeys(state),
         filtersToExclude: selectionStateBranch.selectors.getFiltersToExclude(state),

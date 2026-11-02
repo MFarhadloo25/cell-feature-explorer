@@ -51,6 +51,8 @@ import {
     getConnectByCategory,
     getFiltersToExclude,
     getFilteredShapeValues,
+    getShapeBy,
+    getShapeLegend,
 } from "../../state/selection/selectors";
 import {
     ColorForPlot,
@@ -58,6 +60,8 @@ import {
     SelectedPointData,
     TickConversion,
 } from "../../state/selection/types";
+import type { LegendSection } from "../../components/ExportFigure/figure";
+import { getLegendColors } from "../ColorByMenu/selectors";
 import {
     AnnotationData,
     ContinuousPlotData,
@@ -725,5 +729,28 @@ export const getFormattedHoveredConnectByFeatureValue = createSelector(
     (hoveredPointData, categoricalFeatures, connectByKey, tickConversion): string => {
         const value = hoveredPointData?.connectByFeatureValue ?? undefined;
         return formatAxisValue(value, includes(categoricalFeatures, connectByKey), tickConversion);
+    }
+);
+
+/** Legend blocks for exported figures; the on-screen legends live in the sidebar, outside the plot. */
+export const getExportLegendSections = createSelector(
+    [getLegendColors, getColorBySelection, getShapeBy, getShapeLegend, getMeasuredFeaturesDefs],
+    (colors, colorBy, shapeBy, shapeLegend, defs): LegendSection[] => {
+        const nameOf = (key: string) => defs.find((d) => d.key === key)?.displayName ?? key;
+        const sections: LegendSection[] = [];
+        if (colors.length) {
+            sections.push({
+                title: nameOf(colorBy as string),
+                entries: colors.map((c) => ({ name: c.label, color: c.color })),
+            });
+        }
+        const shapes = shapeLegend
+            .filter((row) => row.visible)
+            .sort((a, b) => b.total - a.total)
+            .map((row) => ({ name: row.name, symbol: row.shape }));
+        if (shapes.length) {
+            sections.push({ title: `Shape: ${nameOf(shapeBy)}`, entries: shapes });
+        }
+        return sections;
     }
 );

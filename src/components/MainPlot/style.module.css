@@ -14,3 +14,11 @@
     white-space: nowrap;
     z-index: 10;
 }
+
+/* Sits beside the Hide panel button at the top-left of the plot area. */
+.export-button {
+    position: absolute;
+    top: 8px;
+    left: 125px;
+    z-index: 10;
+}

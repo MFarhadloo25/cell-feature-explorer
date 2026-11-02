@@ -14,6 +14,8 @@ import Plot from "react-plotly.js";
 
 import { GENERAL_PLOT_SETTINGS } from "../../constants";
 import { TickConversion } from "../../state/selection/types";
+import ExportFigure from "../ExportFigure";
+import type { LegendSection } from "../ExportFigure/figure";
 import PlotSettings from "../PlotSettings";
 import { ICON_SVG_PATH_PLOT_SETTINGS } from "./constants";
 
@@ -32,6 +34,9 @@ interface MainPlotProps {
     yTickConversion: TickConversion;
     xAxisRange?: [number, number];
     yAxisRange?: [number, number];
+    xTitle: string;
+    yTitle: string;
+    legendSections: LegendSection[];
 }
 
 type AxisType = "array" | "auto" | "linear" | undefined;
@@ -286,6 +291,14 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
 
     return (
         <>
+            <ExportFigure
+                className={styles.exportButton}
+                traces={plotDataArray}
+                layout={layout}
+                xTitle={props.xTitle}
+                yTitle={props.yTitle}
+                legendSections={props.legendSections}
+            />
             <Plot
                 data={plotDataArray}
                 useResizeHandler={true}
