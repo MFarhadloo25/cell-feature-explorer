@@ -3,7 +3,7 @@ import { describe, it, expect } from "vitest";
 import { searchFilter } from "../../components/SearchableSelect";
 import type { DataForPlot, MeasuredFeatureDef } from "../../state/metadata/types";
 import { computeAvailableValues, computeTrackInfo } from "../../state/selection/filters";
-import { matchesSearch } from "../search";
+import { deselectMatching, matchesSearch, selectMatching } from "../search";
 
 describe("matchesSearch", () => {
     it("is case-insensitive and matches anywhere in the text", () => {
@@ -52,5 +52,23 @@ describe("search over cascading options", () => {
         ];
         expect(available.filter((v) => matchesSearch(v, "c0"))).toEqual(["C01"]);
         expect(available.filter((v) => matchesSearch(v, "d"))).toEqual(["D05"]);
+    });
+});
+
+describe("select / unselect matching", () => {
+    const available = ["ABCA1", "ABCB1", "TP53"];
+
+    it("selects everything on a blank query, keeping existing picks without duplicates", () => {
+        expect(selectMatching(["TP53"], available, "")).toEqual(["TP53", "ABCA1", "ABCB1"]);
+    });
+
+    it("selects only the matches, then lets a few be unselected", () => {
+        const picked = selectMatching([], available, "abc");
+        expect(picked).toEqual(["ABCA1", "ABCB1"]);
+        expect(deselectMatching(picked, "abcb")).toEqual(["ABCA1"]);
+    });
+
+    it("unselects all on a blank query", () => {
+        expect(deselectMatching(["ABCA1", "TP53"], "  ")).toEqual([]);
     });
 });
