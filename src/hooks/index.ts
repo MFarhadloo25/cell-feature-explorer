@@ -1,3 +1,4 @@
 import useDebouncedSetter from "./useDebouncedSetter";
+import usePersistentState from "./usePersistentState";
 
-export { useDebouncedSetter };
+export { useDebouncedSetter, usePersistentState };

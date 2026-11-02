@@ -1,9 +1,11 @@
-import { Select, Tooltip } from "antd";
+import { Tooltip } from "antd";
 import { SelectProps, SelectValue } from "antd/es/select";
 import React from "react";
 
 import { MeasuredFeatureDef } from "../../state/metadata/types";
 import { X_AXIS_ID, Y_AXIS_ID } from "../../constants";
+
+import SearchableSelect from "../SearchableSelect";
 
 import styles from "./style.module.css";
 
@@ -49,7 +51,7 @@ export default class FeatureSelectDropdown extends React.Component<FeatureSelect
         return (
             <div className={this.props.className ?? styles[classKey]}>
                 <Tooltip title={tooltip}>
-                    <Select
+                    <SearchableSelect
                         id={this.props.id}
                         onChange={this.handleChange}
                         value={selectedOptionLabel || value}
