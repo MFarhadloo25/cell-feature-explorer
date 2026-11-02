@@ -54,9 +54,10 @@ const PLOT_CONFIG: Partial<Config> = {
     responsive: true,
     displayModeBar: true,
     displaylogo: false,
+    // Camera button in the mode bar: PNG at 4x the on-screen pixels.
+    toImageButtonOptions: { format: "png", filename: "cell-feature-explorer", scale: 4 },
     modeBarButtonsToRemove: [
         "sendDataToCloud",
-        "toImage",
         "resetScale2d",
         "hoverClosestCartesian",
         "hoverCompareCartesian",

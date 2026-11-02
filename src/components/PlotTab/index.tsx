@@ -1,4 +1,5 @@
-import { Layout } from "antd";
+import { MenuFoldOutlined, MenuUnfoldOutlined } from "@ant-design/icons";
+import { Button, Layout } from "antd";
 import { uniq } from "lodash";
 import * as React from "react";
 
@@ -15,6 +16,7 @@ class PlotTab extends React.Component {
         defaultActiveKey: [PlotTab.panelKeys[0]],
         openKeys: [PlotTab.panelKeys[0]],
         width: window.innerWidth,
+        panelHidden: false,
     };
 
     public onSelectionToolUsed = () => {
@@ -25,12 +27,19 @@ class PlotTab extends React.Component {
         this.setState({ openKeys: value });
     };
 
+    public togglePanel = () => {
+        // Plotly only resizes on window resize, so nudge it once the layout has changed.
+        this.setState({ panelHidden: !this.state.panelHidden }, () =>
+            window.dispatchEvent(new Event("resize"))
+        );
+    };
+
     public render() {
-        const { openKeys, defaultActiveKey } = this.state;
+        const { openKeys, defaultActiveKey, panelHidden } = this.state;
         return (
             <Layout>
                 <Sider
-                    className={styles.colorMenu}
+                    className={`${styles.colorMenu} ${panelHidden ? styles.hidden : ""}`}
                     width={500}
                     collapsible={false}
                     collapsedWidth={250}
@@ -43,6 +52,14 @@ class PlotTab extends React.Component {
                     />
                 </Sider>
                 <Content className={styles.content}>
+                    <Button
+                        className={styles.panelToggle}
+                        size="small"
+                        icon={panelHidden ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+                        onClick={this.togglePanel}
+                    >
+                        {panelHidden ? "Show panel" : "Hide panel"}
+                    </Button>
                     <div>
                         <MainPlotContainer handleSelectionToolUsed={this.onSelectionToolUsed} />
                     </div>

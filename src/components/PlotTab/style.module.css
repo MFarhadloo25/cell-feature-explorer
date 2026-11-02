@@ -6,6 +6,7 @@
 }
 
 .content {
+    position: relative;
     flex: 2;
     background-color: black;
 }
@@ -23,4 +24,11 @@
 }
 .color-menu :global(.ant-layout-sider-trigger) {
     position: inherit;
+}
+
+.panel-toggle {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    z-index: 10;
 }
