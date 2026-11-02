@@ -27,9 +27,11 @@ import {
 import { NumberOrString, SelectedGroups, State } from "../types";
 import { findFeature, getCategoryString, getFileInfoDatumFromCellId, sortNumeric } from "../util";
 
+import { computeAvailableValues, computeRowMask, computeTrackInfo, summarizeMask } from "./filters";
 import { MISSING_CATEGORY_COLOR, MISSING_CATEGORY_LABEL } from "./constants";
 import {
     ColorForPlot,
+    ColumnFilter,
     DownloadConfig,
     LassoOrBoxSelectPointData,
     MainPlotSettings,
@@ -373,6 +375,44 @@ export const getColorByCategoryCounts = createSelector(
 // FILTERED DATA
 // =============
 
+export const getFilters = (state: State): ColumnFilter[] => state.selection.filters;
+
+/** Track key per row and timepoint counts per track; only recomputed when the data changes. */
+export const getTrackInfo = createSelector(
+    [getPerCellDataForPlot, getMeasuredFeaturesDefs],
+    computeTrackInfo
+);
+
+/** Per-row pass/fail for the persistent filters, or null when none are active. */
+export const getFilterRowMask = createSelector(
+    [getPerCellDataForPlot, getMeasuredFeaturesDefs, getFilters, getTrackInfo],
+    computeRowMask
+);
+
+/** Per filtered column, the values still available given the other filters (in the column's option order). */
+export const getAvailableFilterValues = createSelector(
+    [getPerCellDataForPlot, getMeasuredFeaturesDefs, getFilters, getTrackInfo],
+    (data, defs, filters, trackInfo): { [column: string]: string[] } => {
+        const result: { [column: string]: string[] } = {};
+        filters.forEach(({ column }) => {
+            const def = defs.find((d) => d.key === column);
+            if (!def?.discrete || result[column]) {
+                return;
+            }
+            const available = computeAvailableValues(data, defs, filters, trackInfo, column);
+            result[column] = Object.keys(def.options)
+                .map((key) => getCategoryString(def, key))
+                .filter((name) => available.has(name));
+        });
+        return result;
+    }
+);
+
+export const getFilterSummary = createSelector(
+    [getFilterRowMask, getTrackInfo, getPerCellDataForPlot],
+    (mask, trackInfo, data) => summarizeMask(mask, trackInfo, data?.labels?.cellIds?.length ?? 0)
+);
+
 export const getFilteredCellData = createSelector(
     /**
      * Takes the full data and filters it based on the selected checkboxes and
@@ -384,15 +424,18 @@ export const getFilteredCellData = createSelector(
         getPerCellDataForPlot,
         getGroupByCategory,
         getGroupingCategoryNamesAsArray,
+        getFilterRowMask,
     ],
     (
         measuredFeatureKeys,
         filtersToExclude,
         perCellDataForPlot: DataForPlot,
         categoryKey: string,
-        groupingNames
+        groupingNames,
+        rowMask
     ): DataForPlot => {
-        if (!filtersToExclude.length) {
+        // No cell ids yet means the dataset has not loaded, so there is nothing to filter.
+        if ((!filtersToExclude.length && !rowMask) || !perCellDataForPlot.labels?.cellIds) {
             return {
                 ...perCellDataForPlot,
                 labels: {
@@ -409,7 +452,7 @@ export const getFilteredCellData = createSelector(
         const indices: number[] = [];
         for (let i = 0; i < perCellDataForPlot.labels.cellIds.length; i++) {
             const categoryName: string = groupingNames[i];
-            if (!includes(filtersToExclude, categoryName)) {
+            if (!includes(filtersToExclude, categoryName) && (!rowMask || rowMask[i])) {
                 const cellId = perCellDataForPlot.labels.cellIds[i];
                 cellIds.push(cellId);
                 categoryNameArray.push(categoryName);

@@ -28,6 +28,11 @@ export const SET_POINT_OPACITY = makeSelectionConstant("set-point-opacity");
 export const TOGGLE_FILTER_BY_CATEGORY_NAME = makeSelectionConstant(
     "toggle-filter-by-category-name"
 );
+export const SET_FILTER = makeSelectionConstant("set-filter");
+export const SET_FILTERS = makeSelectionConstant("set-filters");
+export const REMOVE_FILTER = makeSelectionConstant("remove-filter");
+export const TOGGLE_FILTER_ENABLED = makeSelectionConstant("toggle-filter-enabled");
+export const CLEAR_FILTERS = makeSelectionConstant("clear-filters");
 export const OPEN_CELL_IN_3D = makeSelectionConstant("open-cell-in-3d");
 export const TOGGLE_APPLY_SELECTION_SET_COLOR = makeSelectionConstant("apply-selection-set-color");
 export const DESELECT_GROUP_OF_POINTS = makeSelectionConstant("deselect-group");

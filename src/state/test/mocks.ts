@@ -178,6 +178,7 @@ export const mockState = {
         downloadRoot: "dlurl/",
         groupBy: INITIAL_COLOR_AND_GROUP_BY,
         filterExclude: [],
+        filters: [],
         plotByOnX: "apical-proximity",
         plotByOnY: "anaphase-segmentation-complete",
         defaultColors: INITIAL_COLORS,

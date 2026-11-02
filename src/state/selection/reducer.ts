@@ -24,6 +24,11 @@ import {
     SET_MOUSE_POSITION,
     TOGGLE_APPLY_SELECTION_SET_COLOR,
     TOGGLE_FILTER_BY_CATEGORY_NAME,
+    SET_FILTER,
+    SET_FILTERS,
+    REMOVE_FILTER,
+    TOGGLE_FILTER_ENABLED,
+    CLEAR_FILTERS,
     TOGGLE_GALLERY_OPEN_CLOSE,
     SET_DATASET,
     RECEIVE_FILE_INFO_FOR_ALBUM_CELLS,
@@ -52,6 +57,10 @@ import {
     ChangeDownloadConfigAction,
     ChangeGroupByCategory,
     ChangeHoveredPointAction,
+    ColumnFilter,
+    FilterColumnAction,
+    SetFilterAction,
+    SetFiltersAction,
     ChangeMousePositionAction,
     ChangeSelectedDatasetAction,
     ChangeSelectionAction,
@@ -89,6 +98,7 @@ export const initialState: SelectionStateBranch = {
         type: "",
     },
     filterExclude: [] as string[],
+    filters: [] as ColumnFilter[],
     galleryCollapsed: true,
     hoveredCardId: "",
     hoveredPointData: null,
@@ -356,6 +366,44 @@ const actionToConfigMap: TypeToDescriptionMap = {
             ...state,
             filterExclude: action.payload,
         }),
+    },
+    [SET_FILTER]: {
+        accepts: (action: Action): action is SetFilterAction => action.type === SET_FILTER,
+        perform: (state: SelectionStateBranch, action: SetFilterAction) => ({
+            ...state,
+            filters: [
+                ...state.filters.filter((f) => f.column !== action.payload.column),
+                action.payload,
+            ],
+        }),
+    },
+    [SET_FILTERS]: {
+        accepts: (action: Action): action is SetFiltersAction => action.type === SET_FILTERS,
+        perform: (state: SelectionStateBranch, action: SetFiltersAction) => ({
+            ...state,
+            filters: action.payload,
+        }),
+    },
+    [REMOVE_FILTER]: {
+        accepts: (action: Action): action is FilterColumnAction => action.type === REMOVE_FILTER,
+        perform: (state: SelectionStateBranch, action: FilterColumnAction) => ({
+            ...state,
+            filters: state.filters.filter((f) => f.column !== action.payload),
+        }),
+    },
+    [TOGGLE_FILTER_ENABLED]: {
+        accepts: (action: Action): action is FilterColumnAction =>
+            action.type === TOGGLE_FILTER_ENABLED,
+        perform: (state: SelectionStateBranch, action: FilterColumnAction) => ({
+            ...state,
+            filters: state.filters.map((f) =>
+                f.column === action.payload ? { ...f, enabled: !f.enabled } : f
+            ),
+        }),
+    },
+    [CLEAR_FILTERS]: {
+        accepts: (action: Action): action is Action => action.type === CLEAR_FILTERS,
+        perform: (state: SelectionStateBranch) => ({ ...state, filters: [] }),
     },
     [TOGGLE_APPLY_SELECTION_SET_COLOR]: {
         accepts: (action: Action): action is BoolToggleAction =>
