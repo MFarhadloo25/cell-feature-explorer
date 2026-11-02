@@ -84,6 +84,8 @@ export interface ContinuousPlotData {
     y: (number | null)[];
     customdata?: PlotlyCustomData[];
     opacity?: number[];
+    /** Marker symbol per point (Shape By); circles when omitted. */
+    symbols?: string[];
     plotName?: string;
     dataType: DataType.CONTINUOUS;
 }
@@ -100,6 +102,8 @@ export interface GroupedPlotData {
     y: (number | null)[];
     customdata?: PlotlyCustomData[];
     opacity?: number[];
+    /** Marker symbol per point (Shape By); circles when omitted. */
+    symbols?: string[];
     plotName?: string;
     dataType: DataType.GROUPED;
     groups: string[];

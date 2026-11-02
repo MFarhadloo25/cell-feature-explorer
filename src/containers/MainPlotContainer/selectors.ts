@@ -50,6 +50,7 @@ import {
     getConnectByFeature,
     getConnectByCategory,
     getFiltersToExclude,
+    getFilteredShapeValues,
 } from "../../state/selection/selectors";
 import {
     ColorForPlot,
@@ -148,6 +149,7 @@ export const getMainPlotData = createSelector(
         getGroupByCategory,
         getCategoryGroupColorsAndNames,
         getCategoricalFeatureKeys,
+        getFilteredShapeValues,
     ],
     (
         xValues,
@@ -158,7 +160,8 @@ export const getMainPlotData = createSelector(
         categoryToColorBy,
         categoryToGroupBy,
         colorsForPlot,
-        categoricalFeatures
+        categoricalFeatures,
+        symbols
     ): GroupedPlotData | ContinuousPlotData => {
         // Only preserve values at indices where both x and y values are not null,
         // because a coordinate like (3, null) won't be plotted anyway and produces
@@ -175,6 +178,7 @@ export const getMainPlotData = createSelector(
                 x: newXAndYValues.xValues,
                 y: newXAndYValues.yValues,
                 customdata: customData,
+                symbols,
             };
         } else {
             return {
@@ -184,6 +188,7 @@ export const getMainPlotData = createSelector(
                 x: newXAndYValues.xValues,
                 y: newXAndYValues.yValues,
                 customdata: customData,
+                symbols,
             };
         }
     }
@@ -443,7 +448,7 @@ function makeScatterPlotData(
         customdata: plotData.customdata as any,
         marker: {
             size: mainPlotSettings.circleRadius,
-            symbol: "circle",
+            symbol: plotData.symbols ?? "circle",
         },
         // literal typing to avoid a widened type inferred
         mode: "markers" as const,

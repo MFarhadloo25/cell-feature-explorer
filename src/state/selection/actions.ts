@@ -22,6 +22,10 @@ import {
     REMOVE_FILTER,
     TOGGLE_FILTER_ENABLED,
     CLEAR_FILTERS,
+    SET_SHAPE_OVERRIDE,
+    RESET_SHAPE_OVERRIDES,
+    TOGGLE_SHAPE_HIDDEN,
+    SHOW_ALL_SHAPE_CATEGORIES,
     TOGGLE_GALLERY_OPEN_CLOSE,
     CHANGE_DATASET,
     RECEIVE_FILE_INFO,
@@ -78,6 +82,8 @@ import {
     FilterColumnAction,
     SetFilterAction,
     SetFiltersAction,
+    SetShapeOverrideAction,
+    ToggleShapeHiddenAction,
 } from "./types";
 
 export function changeAxis(axisId: string, payload: string): SelectAxisAction {
@@ -239,6 +245,30 @@ export function toggleFilterEnabled(payload: string): FilterColumnAction {
 
 export function clearFilters(): { type: string } {
     return { type: CLEAR_FILTERS };
+}
+
+/** Sets the marker shape of one category; an undefined shape returns it to its default. */
+export function setShapeOverride(
+    payload: SetShapeOverrideAction["payload"]
+): SetShapeOverrideAction {
+    return { payload, type: SET_SHAPE_OVERRIDE };
+}
+
+/** Clears every custom shape of one column. */
+export function resetShapeOverrides(payload: string): FilterColumnAction {
+    return { payload, type: RESET_SHAPE_OVERRIDES };
+}
+
+/** Hides or shows one category of the Shape By column in the plot. */
+export function toggleShapeHidden(
+    payload: ToggleShapeHiddenAction["payload"]
+): ToggleShapeHiddenAction {
+    return { payload, type: TOGGLE_SHAPE_HIDDEN };
+}
+
+/** Shows every hidden category of one column again. */
+export function showAllShapeCategories(payload: string): FilterColumnAction {
+    return { payload, type: SHOW_ALL_SHAPE_CATEGORIES };
 }
 
 export function selectCellFor3DViewer(payload: { id: string }): SelectPointAction {

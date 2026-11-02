@@ -12,6 +12,7 @@ import ColorLegendRow from "../../components/ColorLegend";
 import LimitedList from "../../components/LimitedList";
 import ActiveFilters from "../../components/ActiveFilters";
 import CollapsiblePanel from "../../components/CollapsiblePanel";
+import ShapeBy from "../../components/ShapeBy";
 import ConnectByControl from "../../components/ConnectByControl";
 import {
     COLOR_BY_SELECTOR,
@@ -375,6 +376,7 @@ class ColorByMenu extends React.Component<ColorByMenuProps> {
                     this.renderTaggedStructuresPanel()
                 )}
                 <ActiveFilters />
+                <ShapeBy />
                 {this.renderPanel(panelKeys[1], "Selected sets", this.renderSelectionPanel())}
             </React.Fragment>
         );
