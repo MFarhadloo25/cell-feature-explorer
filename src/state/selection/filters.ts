@@ -167,6 +167,33 @@ export function computeAvailableValues(
     return available;
 }
 
+/** Rows whose category in `column` is not hidden; null when nothing is hidden. Missing categories are never hidden. */
+export function computeHiddenMask(
+    data: DataForPlot,
+    defs: MeasuredFeatureDef[],
+    column: string,
+    hidden: string[] | undefined
+): boolean[] | null {
+    const def = defs.find((d) => d.key === column);
+    const values = data.values?.[column];
+    if (!hidden?.length || !def || !values) {
+        return null;
+    }
+    const hiddenSet = new Set(hidden);
+    return values.map((v) => {
+        const name = getCellString(def, v);
+        return name === null || !hiddenSet.has(name);
+    });
+}
+
+/** AND of two optional masks (null = everything passes). */
+export function combineMasks(a: boolean[] | null, b: boolean[] | null): boolean[] | null {
+    if (!a || !b) {
+        return a ?? b;
+    }
+    return a.map((pass, i) => pass && b[i]);
+}
+
 export function summarizeMask(mask: boolean[] | null, trackInfo: TrackInfo, total: number) {
     if (!mask) {
         return { samples: total, tracks: trackInfo.timepointCounts.size };
