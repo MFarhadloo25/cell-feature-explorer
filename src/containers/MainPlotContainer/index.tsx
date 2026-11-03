@@ -111,6 +111,7 @@ interface PropsFromApp {
     handleSelectionToolUsed: () => void;
     /** Rendered at the start of the plot's top-left toolbar. */
     leadingControls?: React.ReactNode;
+    lightMode?: boolean;
 }
 
 type MainPlotContainerProps = PropsFromState & DispatchProps & PropsFromApp;
@@ -392,6 +393,7 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
                         canExportCsv={!!this.props.csvDataset}
                         onExportCsv={this.onExportCsv}
                         leadingControls={this.props.leadingControls}
+                        lightMode={this.props.lightMode}
                         onPointHovered={this.onPointHovered}
                         onPointUnhovered={this.onPointUnhovered}
                         xAxisType={includes(categoricalFeatures, xDropDownValue) ? "array" : "auto"}

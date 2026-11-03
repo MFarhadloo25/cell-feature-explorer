@@ -32,6 +32,8 @@ interface MainPlotProps {
     canExportCsv: boolean;
     onExportCsv: () => void;
     leadingControls?: React.ReactNode;
+    /** White plot background with dark text; dark is the default. */
+    lightMode?: boolean;
     xAxisType: AxisType;
     yAxisType: AxisType;
     xTickConversion: TickConversion;
@@ -185,21 +187,30 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
         });
     }, [annotations, showFullAnnotation]);
 
-    const { xAxisType, xTickConversion, xAxisRange, yAxisType, yTickConversion, yAxisRange } =
-        props;
+    const {
+        xAxisType,
+        xTickConversion,
+        xAxisRange,
+        yAxisType,
+        yTickConversion,
+        yAxisRange,
+        lightMode,
+    } = props;
     const layout = React.useMemo((): Partial<Layout> => {
+        const textColor = lightMode ? "#000000" : GENERAL_PLOT_SETTINGS.textColor;
+        const backgroundColor = lightMode ? "#ffffff" : GENERAL_PLOT_SETTINGS.backgroundColor;
         const makeAxis = (type: AxisType, tickConversion: any, range?: [number, number]) => ({
-            color: GENERAL_PLOT_SETTINGS.textColor,
+            color: textColor,
             domain: [0, 1],
             hoverformat: ".1f",
-            linecolor: GENERAL_PLOT_SETTINGS.textColor,
+            linecolor: textColor,
             showgrid: false,
             showspikes: true,
-            spikecolor: GENERAL_PLOT_SETTINGS.spikeColor,
+            spikecolor: lightMode ? "rgba(0, 0, 0, 0.5)" : GENERAL_PLOT_SETTINGS.spikeColor,
             spikethickness: 2,
             spikedash: "dot",
             spikemode: "toaxis+marker" as const,
-            tickcolor: GENERAL_PLOT_SETTINGS.textColor,
+            tickcolor: textColor,
             tickmode: type,
             ticktext: tickConversion.tickText,
             tickvals: tickConversion.tickValues,
@@ -212,10 +223,11 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
             autosize: true,
             height: height - GENERAL_PLOT_SETTINGS.heightMargin,
             hovermode: "closest",
+            font: { color: textColor },
             legend: GENERAL_PLOT_SETTINGS.legend,
             margin: GENERAL_PLOT_SETTINGS.margin,
-            paper_bgcolor: GENERAL_PLOT_SETTINGS.backgroundColor,
-            plot_bgcolor: GENERAL_PLOT_SETTINGS.backgroundColor,
+            paper_bgcolor: backgroundColor,
+            plot_bgcolor: backgroundColor,
             xaxis: makeAxis(xAxisType, xTickConversion, xAxisRange && padAxisRange(xAxisRange)),
             yaxis: makeAxis(yAxisType, yTickConversion, yAxisRange && padAxisRange(yAxisRange)),
             // Constant value prevents the plot from resetting on
@@ -224,6 +236,7 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
         };
     }, [
         height,
+        lightMode,
         updatedAnnotations,
         xAxisType,
         xTickConversion,
