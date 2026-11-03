@@ -39,6 +39,8 @@ export interface SelectionStateBranch {
     colorOverrides: (string | undefined)[];
     pointRadius: number;
     pointOpacity: number;
+    /** Plotly colorscale name for a numeric color-by; "" is Plotly's default (grey to red). */
+    colorScale: string;
     selectedAlbum: number;
     selectedGroupColors: { [key: string]: string };
     selectedGroups: SelectedGroups;
@@ -269,6 +271,11 @@ export interface SetLineOpacityAction {
 
 export interface SetPointRadiusAction {
     payload: number;
+    type: string;
+}
+
+export interface SetColorScaleAction {
+    payload: string;
     type: string;
 }
 

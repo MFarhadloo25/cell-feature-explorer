@@ -72,6 +72,7 @@ export const getColorOverrides = (state: State): (string | undefined)[] =>
 export const getPointRadius = (state: State): number => state.selection.pointRadius;
 /** Returns the opacity of points in the plot, in a [0, 1] range. */
 export const getPointOpacity = (state: State): number => state.selection.pointOpacity;
+export const getColorScale = (state: State): string => state.selection.colorScale;
 export const getSelectionSetColors = (state: State): { [key: string]: string } =>
     state.selection.selectedGroupColors;
 export const getFiltersToExclude = (state: State): string[] => state.selection.filterExclude;

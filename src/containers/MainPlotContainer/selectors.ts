@@ -53,6 +53,7 @@ import {
     getFilteredShapeValues,
     getShapeBy,
     getShapeLegend,
+    getColorScale,
 } from "../../state/selection/selectors";
 import {
     ColorForPlot,
@@ -161,6 +162,7 @@ export const getMainPlotData = createSelector(
         getCategoricalFeatureKeys,
         getFilteredShapeValues,
         getColorByRange,
+        getColorScale,
     ],
     (
         xValues,
@@ -173,7 +175,8 @@ export const getMainPlotData = createSelector(
         colorsForPlot,
         categoricalFeatures,
         symbols,
-        colorRange
+        colorRange,
+        colorScale
     ): GroupedPlotData | ContinuousPlotData => {
         // Only preserve values at indices where both x and y values are not null,
         // because a coordinate like (3, null) won't be plotted anyway and produces
@@ -197,6 +200,7 @@ export const getMainPlotData = createSelector(
                 color: categoryToColorBy === categoryToGroupBy ? undefined : colorByValues,
                 dataType: DataType.CONTINUOUS,
                 colorRange,
+                colorScale: colorScale || undefined,
                 ids,
                 x: newXAndYValues.xValues,
                 y: newXAndYValues.yValues,
@@ -448,6 +452,7 @@ function colorSettings(
             color: plotData.color,
             cmin: plotData.colorRange?.[0],
             cmax: plotData.colorRange?.[1],
+            colorscale: plotData.colorScale,
             opacity: plotData.opacity ?? mainPlotSettings.unselectedCircleOpacity,
         },
     };

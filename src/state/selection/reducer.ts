@@ -46,6 +46,7 @@ import {
     SET_COLOR_OVERRIDES,
     SET_POINT_RADIUS,
     SET_POINT_OPACITY,
+    SET_COLOR_SCALE,
     CHANGE_CONNECT_BY_CATEGORY,
     CHANGE_CONNECT_BY_FEATURE,
     SET_SHOW_CONNECT_LINES,
@@ -89,6 +90,7 @@ import {
     SetLineOpacityAction,
     SetLineWidthAction,
     SetPointOpacityAction,
+    SetColorScaleAction,
     SetPointRadiusAction,
     SetShowConnectLines,
 } from "./types";
@@ -127,6 +129,7 @@ export const initialState: SelectionStateBranch = {
     pointRadius: 4,
     /** Opacity of points in the plot, in the [0, 1] range. */
     pointOpacity: 0.5,
+    colorScale: "",
     connectLineMovingAverageWindow: 1,
     connectLineWidth: GENERAL_PLOT_SETTINGS.connectionLineWidth,
     connectLineDefaultColor: GENERAL_PLOT_SETTINGS.connectionLineDefaultColor,
@@ -359,6 +362,13 @@ const actionToConfigMap: TypeToDescriptionMap = {
             }
             return state;
         },
+    },
+    [SET_COLOR_SCALE]: {
+        accepts: (action: Action): action is SetColorScaleAction => action.type === SET_COLOR_SCALE,
+        perform: (state: SelectionStateBranch, action: SetColorScaleAction) => ({
+            ...state,
+            colorScale: action.payload,
+        }),
     },
     [SET_COLOR_OVERRIDES]: {
         accepts: (action: Action): action is SetColorOverridesAction =>

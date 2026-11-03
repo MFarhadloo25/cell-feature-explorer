@@ -39,6 +39,7 @@ import {
     SET_COLOR_OVERRIDES,
     SET_POINT_RADIUS,
     SET_POINT_OPACITY,
+    SET_COLOR_SCALE,
     CHANGE_CONNECT_BY_CATEGORY,
     CHANGE_CONNECT_BY_FEATURE,
     SET_SHOW_CONNECT_LINES,
@@ -76,6 +77,7 @@ import {
     SetLineOpacityAction,
     SetLineWidthAction,
     SetPointOpacityAction,
+    SetColorScaleAction,
     SetPointRadiusAction,
     SyncStateWithURLAction,
     ColumnFilter,
@@ -217,6 +219,10 @@ export function setPointOpacity(payload: number): SetPointOpacityAction {
         payload,
         type: SET_POINT_OPACITY,
     };
+}
+
+export function setColorScale(payload: string): SetColorScaleAction {
+    return { payload, type: SET_COLOR_SCALE };
 }
 
 export function toggleFilterByCategoryName(payload: string): ChangeSelectionAction {

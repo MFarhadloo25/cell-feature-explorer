@@ -20,6 +20,16 @@ import { selectedCellFileInfo } from "../../state/test/mocks";
 import UrlState, { URLSearchParam } from "../UrlState";
 
 describe("UrlState utility class", () => {
+    describe("color scale param", () => {
+        it("round-trips a chosen scale and leaves the default out", () => {
+            const params = UrlState.toUrlSearchParameterMap({ colorScale: "Viridis" });
+            expect(UrlState.toAppState(params).colorScale).toBe("Viridis");
+            expect(UrlState.toUrlSearchParameterMap({ colorScale: "" })).not.toHaveProperty(
+                "colorScale"
+            );
+        });
+    });
+
     describe("filters param", () => {
         const filters = [
             { column: "gene", values: ["ABCA1", "TP53"], enabled: true },

@@ -88,6 +88,8 @@ export interface ContinuousPlotData {
     symbols?: string[];
     /** Color scale range from the unfiltered data, so filtering does not rescale the colors. */
     colorRange?: [number, number];
+    /** Plotly colorscale name; undefined uses Plotly's default. */
+    colorScale?: string;
     plotName?: string;
     dataType: DataType.CONTINUOUS;
 }
