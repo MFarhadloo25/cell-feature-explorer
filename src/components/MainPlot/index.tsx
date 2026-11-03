@@ -10,10 +10,9 @@ import type {
 } from "plotly.js";
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
-import Plotly from "plotly.js/dist/plotly";
 import Plot from "react-plotly.js";
 
-import { GENERAL_PLOT_SETTINGS, SCATTER_PLOT_NAME } from "../../constants";
+import { GENERAL_PLOT_SETTINGS } from "../../constants";
 import { TickConversion } from "../../state/selection/types";
 import ExportFigure from "../ExportFigure";
 import type { LegendSection } from "../ExportFigure/figure";
@@ -29,10 +28,6 @@ interface MainPlotProps {
     onPointHovered: (hovered: PlotMouseEvent) => void;
     onPointUnhovered: (unhovered: PlotMouseEvent) => void;
     onGroupSelected: (selected: PlotSelectionEvent) => void;
-    /** Removes points (outliers/artifacts) from the plot instead of selecting them. */
-    onRemovePoints: (cellIds: string[]) => void;
-    onRestorePoints: () => void;
-    removedCount: number;
     canExportCsv: boolean;
     onExportCsv: () => void;
     xAxisType: AxisType;
@@ -260,28 +255,7 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
     }, []);
     React.useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
 
-    const { onPointHovered, onPointUnhovered, onGroupSelected, onRemovePoints, plotDataArray } =
-        props;
-    const [removeMode, setRemoveMode] = useState(false);
-    const handleSelected = React.useCallback(
-        (event: PlotSelectionEvent) => {
-            if (!removeMode) {
-                return onGroupSelected(event);
-            }
-            const ids = (event?.points ?? [])
-                .filter((p: any) => p.data.name === SCATTER_PLOT_NAME)
-                .map((p: any) => p.id as string);
-            if (ids.length) {
-                onRemovePoints(ids);
-            }
-            // Drop the selection outline and dimming; the removed points are gone from the data.
-            if (graphDivRef.current) {
-                Plotly.restyle(graphDivRef.current, { selectedpoints: [null] } as any);
-                Plotly.relayout(graphDivRef.current, { selections: [] } as any);
-            }
-        },
-        [removeMode, onGroupSelected, onRemovePoints]
-    );
+    const { onPointHovered, onPointUnhovered, onGroupSelected, plotDataArray } = props;
     const lastAnnotation = annotations.length > 0 ? annotations[annotations.length - 1] : null;
 
     const [showConfigPopup, setShowConfigPopup] = useState(false);
@@ -329,20 +303,6 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
                     colorByTitle={props.colorByTitle}
                     legendSections={props.legendSections}
                 />
-                <Button
-                    size="small"
-                    type={removeMode ? "primary" : "default"}
-                    danger={removeMode}
-                    onClick={() => setRemoveMode(!removeMode)}
-                    title="While on, Box or Lasso select removes the enclosed points from the plot"
-                >
-                    Remove points: {removeMode ? "on" : "off"}
-                </Button>
-                {props.removedCount > 0 && (
-                    <Button size="small" onClick={props.onRestorePoints}>
-                        Restore {props.removedCount} removed
-                    </Button>
-                )}
                 <Button size="small" disabled={!props.canExportCsv} onClick={props.onExportCsv}>
                     Export CSV
                 </Button>
@@ -356,7 +316,7 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
                 onClickAnnotation={handleAnnotationClick}
                 onHover={onPointHovered}
                 onUnhover={onPointUnhovered}
-                onSelected={handleSelected}
+                onSelected={onGroupSelected}
                 onInitialized={handleInitialized}
                 onAfterPlot={onAfterPlotRender}
             />

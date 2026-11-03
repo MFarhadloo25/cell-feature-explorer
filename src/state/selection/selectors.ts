@@ -41,6 +41,7 @@ import { MISSING_CATEGORY_COLOR, MISSING_CATEGORY_LABEL } from "./constants";
 import {
     ColorForPlot,
     ColumnFilter,
+    RemovedSet,
     DownloadConfig,
     LassoOrBoxSelectPointData,
     MainPlotSettings,
@@ -74,7 +75,11 @@ export const getPointRadius = (state: State): number => state.selection.pointRad
 /** Returns the opacity of points in the plot, in a [0, 1] range. */
 export const getPointOpacity = (state: State): number => state.selection.pointOpacity;
 export const getColorScale = (state: State): string => state.selection.colorScale;
-export const getExcludedCellIds = (state: State): string[] => state.selection.excludedCellIds;
+export const getRemovedSets = (state: State): RemovedSet[] => state.selection.removedSets;
+/** Cell ids hidden by the active removed sets. */
+export const getExcludedCellIds = createSelector([getRemovedSets], (sets): string[] =>
+    sets.filter((set) => set.active).flatMap((set) => set.cellIds)
+);
 export const getSelectionSetColors = (state: State): { [key: string]: string } =>
     state.selection.selectedGroupColors;
 export const getFiltersToExclude = (state: State): string[] => state.selection.filterExclude;
@@ -403,7 +408,7 @@ const getColumnFilterRowMask = createSelector(
     computeRowMask
 );
 
-const getExcludedMask = createSelector(
+export const getExcludedMask = createSelector(
     [getPerCellDataForPlot, getExcludedCellIds],
     computeExcludedMask
 );

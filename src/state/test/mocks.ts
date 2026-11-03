@@ -180,7 +180,7 @@ export const mockState = {
         filterExclude: [],
         filters: [],
         colorScale: "",
-        excludedCellIds: [],
+        removedSets: [],
         shapeBy: "",
         shapeOverrides: {},
         shapeHidden: {},

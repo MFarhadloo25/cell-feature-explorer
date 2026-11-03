@@ -55,6 +55,7 @@ import {
     getShapeBy,
     getShapeLegend,
     getColorScale,
+    getExcludedMask,
 } from "../../state/selection/selectors";
 import {
     ColorForPlot,
@@ -689,18 +690,20 @@ const getAxisRange = (values: (number | null)[]): [number, number] | undefined =
     return [min, max];
 };
 
+// Cells in an active removed set do not count, so the axes refit to the points that remain.
+const withoutRemoved = (values: (number | null)[], keep: boolean[] | null) =>
+    keep ? values.filter((_, i) => keep[i]) : values;
+
 export const getXAxisRange = createSelector(
-    [getXValues],
-    (xValues: (number | null)[]): [number, number] | undefined => {
-        return getAxisRange(xValues);
-    }
+    [getXValues, getExcludedMask],
+    (xValues: (number | null)[], keep): [number, number] | undefined =>
+        getAxisRange(withoutRemoved(xValues, keep))
 );
 
 export const getYAxisRange = createSelector(
-    [getYValues],
-    (yValues: (number | null)[]): [number, number] | undefined => {
-        return getAxisRange(yValues);
-    }
+    [getYValues, getExcludedMask],
+    (yValues: (number | null)[], keep): [number, number] | undefined =>
+        getAxisRange(withoutRemoved(yValues, keep))
 );
 
 export const getXDisplayName = createSelector(

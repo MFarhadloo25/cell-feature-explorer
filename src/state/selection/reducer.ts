@@ -47,8 +47,9 @@ import {
     SET_POINT_RADIUS,
     SET_POINT_OPACITY,
     SET_COLOR_SCALE,
-    EXCLUDE_CELLS,
-    RESTORE_EXCLUDED_CELLS,
+    ADD_REMOVED_SET,
+    TOGGLE_REMOVED_SET,
+    DELETE_REMOVED_SET,
     CHANGE_CONNECT_BY_CATEGORY,
     CHANGE_CONNECT_BY_FEATURE,
     SET_SHOW_CONNECT_LINES,
@@ -93,7 +94,9 @@ import {
     SetLineWidthAction,
     SetPointOpacityAction,
     SetColorScaleAction,
-    ExcludeCellsAction,
+    AddRemovedSetAction,
+    RemovedSetIdAction,
+    RemovedSet,
     SetPointRadiusAction,
     SetShowConnectLines,
 } from "./types";
@@ -133,7 +136,7 @@ export const initialState: SelectionStateBranch = {
     /** Opacity of points in the plot, in the [0, 1] range. */
     pointOpacity: 0.5,
     colorScale: "",
-    excludedCellIds: [] as string[],
+    removedSets: [] as RemovedSet[],
     connectLineMovingAverageWindow: 1,
     connectLineWidth: GENERAL_PLOT_SETTINGS.connectionLineWidth,
     connectLineDefaultColor: GENERAL_PLOT_SETTINGS.connectionLineDefaultColor,
@@ -367,16 +370,30 @@ const actionToConfigMap: TypeToDescriptionMap = {
             return state;
         },
     },
-    [EXCLUDE_CELLS]: {
-        accepts: (action: Action): action is ExcludeCellsAction => action.type === EXCLUDE_CELLS,
-        perform: (state: SelectionStateBranch, action: ExcludeCellsAction) => ({
+    [ADD_REMOVED_SET]: {
+        accepts: (action: Action): action is AddRemovedSetAction => action.type === ADD_REMOVED_SET,
+        perform: (state: SelectionStateBranch, action: AddRemovedSetAction) => ({
             ...state,
-            excludedCellIds: Array.from(new Set([...state.excludedCellIds, ...action.payload])),
+            removedSets: [...state.removedSets, { ...action.payload, active: true }],
         }),
     },
-    [RESTORE_EXCLUDED_CELLS]: {
-        accepts: (action: Action): action is Action => action.type === RESTORE_EXCLUDED_CELLS,
-        perform: (state: SelectionStateBranch) => ({ ...state, excludedCellIds: [] }),
+    [TOGGLE_REMOVED_SET]: {
+        accepts: (action: Action): action is RemovedSetIdAction =>
+            action.type === TOGGLE_REMOVED_SET,
+        perform: (state: SelectionStateBranch, action: RemovedSetIdAction) => ({
+            ...state,
+            removedSets: state.removedSets.map((set) =>
+                set.id === action.payload ? { ...set, active: !set.active } : set
+            ),
+        }),
+    },
+    [DELETE_REMOVED_SET]: {
+        accepts: (action: Action): action is RemovedSetIdAction =>
+            action.type === DELETE_REMOVED_SET,
+        perform: (state: SelectionStateBranch, action: RemovedSetIdAction) => ({
+            ...state,
+            removedSets: state.removedSets.filter((set) => set.id !== action.payload),
+        }),
     },
     [SET_COLOR_SCALE]: {
         accepts: (action: Action): action is SetColorScaleAction => action.type === SET_COLOR_SCALE,

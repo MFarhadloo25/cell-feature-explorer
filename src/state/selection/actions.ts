@@ -40,8 +40,9 @@ import {
     SET_POINT_RADIUS,
     SET_POINT_OPACITY,
     SET_COLOR_SCALE,
-    EXCLUDE_CELLS,
-    RESTORE_EXCLUDED_CELLS,
+    ADD_REMOVED_SET,
+    TOGGLE_REMOVED_SET,
+    DELETE_REMOVED_SET,
     CHANGE_CONNECT_BY_CATEGORY,
     CHANGE_CONNECT_BY_FEATURE,
     SET_SHOW_CONNECT_LINES,
@@ -80,7 +81,8 @@ import {
     SetLineWidthAction,
     SetPointOpacityAction,
     SetColorScaleAction,
-    ExcludeCellsAction,
+    AddRemovedSetAction,
+    RemovedSetIdAction,
     SetPointRadiusAction,
     SyncStateWithURLAction,
     ColumnFilter,
@@ -224,12 +226,17 @@ export function setPointOpacity(payload: number): SetPointOpacityAction {
     };
 }
 
-export function excludeCells(payload: string[]): ExcludeCellsAction {
-    return { payload, type: EXCLUDE_CELLS };
+/** Moves a group of cells out of the plot (switched on = hidden). */
+export function addRemovedSet(payload: AddRemovedSetAction["payload"]): AddRemovedSetAction {
+    return { payload, type: ADD_REMOVED_SET };
 }
 
-export function restoreExcludedCells(): { type: string } {
-    return { type: RESTORE_EXCLUDED_CELLS };
+export function toggleRemovedSet(payload: string): RemovedSetIdAction {
+    return { payload, type: TOGGLE_REMOVED_SET };
+}
+
+export function deleteRemovedSet(payload: string): RemovedSetIdAction {
+    return { payload, type: DELETE_REMOVED_SET };
 }
 
 export function setColorScale(payload: string): SetColorScaleAction {

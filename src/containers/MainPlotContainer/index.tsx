@@ -23,7 +23,6 @@ import {
     ChangeHoveredPointAction,
     ChangeMousePositionAction,
     DeselectPointAction,
-    ExcludeCellsAction,
     LassoOrBoxSelectAction,
     MousePosition,
     SelectAxisAction,
@@ -70,7 +69,6 @@ interface PropsFromState {
     annotations: PlotlyAnnotation[];
     legendSections: LegendSection[];
     colorByTitle: string;
-    excludedCount: number;
     csvDataset: CsvRequest | undefined;
     keptCellIds: string[];
     categoricalFeatures: string[];
@@ -106,8 +104,6 @@ interface DispatchProps {
     updateMousePosition: ActionCreator<ChangeMousePositionAction>;
     handleChangeAxis: ActionCreator<SelectAxisAction>;
     requestCellFileInfoData: ActionCreator<RequestAction>;
-    handleExcludeCells: ActionCreator<ExcludeCellsAction>;
-    handleRestoreExcluded: ActionCreator<{ type: string }>;
 }
 
 interface PropsFromApp {
@@ -391,9 +387,6 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
                         onPointClicked={this.onPointClicked}
                         annotations={annotations}
                         onGroupSelected={this.onGroupSelected}
-                        onRemovePoints={this.props.handleExcludeCells}
-                        onRestorePoints={this.props.handleRestoreExcluded}
-                        removedCount={this.props.excludedCount}
                         canExportCsv={!!this.props.csvDataset}
                         onExportCsv={this.onExportCsv}
                         onPointHovered={this.onPointHovered}
@@ -420,7 +413,6 @@ function mapStateToProps(state: State): PropsFromState {
         annotations: getAnnotations(state),
         legendSections: getExportLegendSections(state),
         colorByTitle: getColorByTitle(state),
-        excludedCount: selectionStateBranch.selectors.getExcludedCount(state),
         // Only CSV datasets keep the original rows needed to export a reloadable file.
         csvDataset: ((d) => (d instanceof CsvRequest ? d : undefined))(getImageDataset(state)),
         keptCellIds:
@@ -459,8 +451,6 @@ const dispatchToPropsMap: DispatchProps = {
     requestCellFileInfoData: metadataStateBranch.actions.requestCellFileInfoData,
     requestFeatureData: metadataStateBranch.actions.requestFeatureData,
     updateMousePosition: selectionStateBranch.actions.changeMousePosition,
-    handleExcludeCells: selectionStateBranch.actions.excludeCells,
-    handleRestoreExcluded: selectionStateBranch.actions.restoreExcludedCells,
 };
 
 export default connect<PropsFromState, DispatchProps, PropsFromApp, State>(
