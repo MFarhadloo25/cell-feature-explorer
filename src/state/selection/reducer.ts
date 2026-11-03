@@ -101,6 +101,15 @@ import {
     SetShowConnectLines,
 } from "./types";
 
+/** First palette color not in use; colors of closed selections are reused, and the palette cycles when exhausted. */
+function nextSelectionColor(inUse: { [key: string]: string }): string {
+    const used = Object.values(inUse);
+    return (
+        INITIAL_SELECTION_COLORS.find((color) => !used.includes(color)) ??
+        INITIAL_SELECTION_COLORS[used.length % INITIAL_SELECTION_COLORS.length]
+    );
+}
+
 export const initialState: SelectionStateBranch = {
     applySelectionSetColoring: true,
     cellSelectedFor3D: "",
@@ -294,7 +303,7 @@ const actionToConfigMap: TypeToDescriptionMap = {
             ...state,
             selectedGroupColors: {
                 ...state.selectedGroupColors,
-                [action.key]: INITIAL_SELECTION_COLORS.splice(0, 1)[0],
+                [action.key]: nextSelectionColor(state.selectedGroupColors),
             },
             selectedGroups: {
                 ...state.selectedGroups,

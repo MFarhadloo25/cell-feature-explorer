@@ -10,9 +10,10 @@ import type {
 } from "plotly.js";
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
+import Plotly from "plotly.js/dist/plotly";
 import Plot from "react-plotly.js";
 
-import { GENERAL_PLOT_SETTINGS } from "../../constants";
+import { GENERAL_PLOT_SETTINGS, SCATTER_PLOT_NAME } from "../../constants";
 import { TickConversion } from "../../state/selection/types";
 import ExportFigure from "../ExportFigure";
 import type { LegendSection } from "../ExportFigure/figure";
@@ -256,6 +257,18 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
     React.useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
 
     const { onPointHovered, onPointUnhovered, onGroupSelected, plotDataArray } = props;
+    // Plotly keeps its own selection by point position (the uirevision keeps it across updates), so
+    // when points are removed or filtered it would mark the wrong points. Selected sets live in
+    // redux and are drawn as their own trace, so clearing Plotly's copy loses nothing.
+    const visiblePointCount = (plotDataArray as any[]).reduce(
+        (n, trace) => (trace.name === SCATTER_PLOT_NAME ? n + (trace.x?.length ?? 0) : n),
+        0
+    );
+    React.useEffect(() => {
+        if (graphDivRef.current) {
+            Plotly.restyle(graphDivRef.current, { selectedpoints: [null] } as any);
+        }
+    }, [visiblePointCount]);
     const lastAnnotation = annotations.length > 0 ? annotations[annotations.length - 1] : null;
 
     const [showConfigPopup, setShowConfigPopup] = useState(false);

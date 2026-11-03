@@ -713,13 +713,21 @@ export const getSelected3DCellFeatureData = createSelector(
 
 // LASSOED or BOX SELECTED GROUPS SELECTORS
 export const getSelectedGroupsData = createSelector(
-    [getPerCellDataForPlot, getSelectedGroups, getPlotByOnX, getPlotByOnY, getSelectionSetColors],
+    [
+        getPerCellDataForPlot,
+        getSelectedGroups,
+        getPlotByOnX,
+        getPlotByOnY,
+        getSelectionSetColors,
+        getRowMask,
+    ],
     (
         metaData,
         selectedGroups,
         plotByOnX,
         plotByOnY,
-        selectedGroupColorMapping
+        selectedGroupColorMapping,
+        rowMask
     ): {
         x: (number | null)[];
         y: (number | null)[];
@@ -732,6 +740,10 @@ export const getSelectedGroupsData = createSelector(
         mapValues(selectedGroups, (value, key: string) => {
             // for each point index, get x, y, and color for the point.
             value.forEach((point: LassoOrBoxSelectPointData) => {
+                // Points hidden by filters or a removed set are not highlighted either.
+                if (rowMask && !rowMask[point.pointIndex]) {
+                    return;
+                }
                 colorArray.push(selectedGroupColorMapping[key]);
                 xValues.push(metaData.values[plotByOnX][point.pointIndex]);
                 yValues.push(metaData.values[plotByOnY][point.pointIndex]);

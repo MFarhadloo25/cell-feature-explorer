@@ -56,6 +56,7 @@ import {
     getShapeLegend,
     getColorScale,
     getExcludedMask,
+    getRowMask,
 } from "../../state/selection/selectors";
 import {
     ColorForPlot,
@@ -336,6 +337,7 @@ const getAnnotationData = createSelector(
         getPlotByOnY,
         getGroupingCategoryNamesAsArray,
         getHoveredCardId,
+        getRowMask,
     ],
     (
         allCellData: DataForPlot,
@@ -344,7 +346,8 @@ const getAnnotationData = createSelector(
         xAxis,
         yAxis,
         groupByCategoryNames,
-        currentHoveredCellId
+        currentHoveredCellId,
+        rowMask
     ): AnnotationData[] => {
         if (isEmpty(allCellData.values) || isEmpty(allCellData.labels)) {
             return [];
@@ -368,7 +371,7 @@ const getAnnotationData = createSelector(
 
             // Apply filtering
             const groupName = groupByCategoryNames[pointIndex] ?? null;
-            if (filtersToExclude.includes(groupName)) {
+            if (filtersToExclude.includes(groupName) || (rowMask && !rowMask[pointIndex])) {
                 return acc;
             }
 
