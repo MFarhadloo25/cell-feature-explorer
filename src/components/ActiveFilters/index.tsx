@@ -1,5 +1,5 @@
 import { Button, Collapse, Divider, InputNumber, Switch } from "antd";
-import React, { ReactElement, useState } from "react";
+import React, { ReactElement, useMemo, useState } from "react";
 import { connect } from "react-redux";
 
 import { usePersistentState } from "../../hooks";
@@ -40,12 +40,15 @@ type DispatchProps = {
 };
 
 /** Available values first; selected values that no longer match other filters stay visible but flagged. */
-const valueOptions = (available: string[] = [], selected: string[] = []) => [
-    ...available.map((name) => ({ value: name, label: name })),
-    ...selected
-        .filter((name) => !available.includes(name))
-        .map((name) => ({ value: name, label: `${name} (no match)` })),
-];
+const valueOptions = (available: string[] = [], selected: string[] = []) => {
+    const availableSet = new Set(available);
+    return [
+        ...available.map((name) => ({ value: name, label: name })),
+        ...selected
+            .filter((name) => !availableSet.has(name))
+            .map((name) => ({ value: name, label: `${name} (no match)` })),
+    ];
+};
 
 /** Multi-select with Select all / Clear that act on what the search box currently matches. */
 const ValueSelect = (props: {
@@ -55,7 +58,11 @@ const ValueSelect = (props: {
 }): ReactElement => {
     const { values, available, onChange } = props;
     const [search, setSearch] = useState("");
-    const matches = available.filter((name) => matchesSearch(name, search)).length;
+    const matches = useMemo(
+        () => available.filter((name) => matchesSearch(name, search)).length,
+        [available, search]
+    );
+    const options = useMemo(() => valueOptions(available, values), [available, values]);
     // mouseDown is swallowed so clicking the buttons does not blur the select and close the list.
     const keepOpen = (e: React.MouseEvent) => e.preventDefault();
     return (
@@ -64,7 +71,10 @@ const ValueSelect = (props: {
             mode="multiple"
             style={{ flex: "1 1 160px", minWidth: 0 }}
             value={values}
-            options={valueOptions(available, values)}
+            options={options}
+            // One tag per selected value makes thousands of tracks take seconds to render.
+            maxTagCount={3}
+            maxTagPlaceholder={(omitted) => `+${omitted.length} more`}
             onChange={onChange}
             searchValue={search}
             onSearch={setSearch}

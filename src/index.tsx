@@ -84,9 +84,15 @@ params.onParamRemoved("dataset", () => {
 });
 
 // keep the URL in sync with the state of this app
+let lastMapping: ReturnType<typeof UrlState.toUrlSearchParameterMap> | undefined;
 store.subscribe(function updateURL() {
     const state = store.getState();
     const mapping = UrlState.toUrlSearchParameterMap(state.selection);
+    // Hover and mouse moves fire this on every dispatch; parsing a long filters query each time is slow.
+    if (lastMapping && !UrlState.paramsChanged(mapping, lastMapping)) {
+        return;
+    }
+    lastMapping = mapping;
     const currentParams = params.getParams();
     const datasetChanged = UrlState.paramChanged(URLSearchParam.dataset, mapping, currentParams);
     if (datasetChanged) {
