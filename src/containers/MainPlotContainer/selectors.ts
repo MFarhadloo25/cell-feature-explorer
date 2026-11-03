@@ -73,7 +73,7 @@ import {
 import { findFeature } from "../../state/util";
 import { getGroupByTitle } from "../ColorByMenu/selectors";
 import { PlotlyAnnotation } from "../../components/MainPlot";
-import { getMovingAverage } from "../../util/math";
+import { getMovingAverage, numericRange } from "../../util/math";
 
 export const handleNullValues = (
     inputXValues: (number | null)[],
@@ -142,6 +142,12 @@ export const getPlotlyCustomData = createSelector(
     }
 );
 
+/** Full-dataset range of the color-by column; filters and legend hiding must not rescale numeric colors. */
+const getColorByRange = createSelector(
+    [getPerCellDataForPlot, getColorBySelection],
+    (data, colorBy) => numericRange(data.values?.[colorBy as string])
+);
+
 export const getMainPlotData = createSelector(
     [
         getFilteredXValues,
@@ -154,6 +160,7 @@ export const getMainPlotData = createSelector(
         getCategoryGroupColorsAndNames,
         getCategoricalFeatureKeys,
         getFilteredShapeValues,
+        getColorByRange,
     ],
     (
         xValues,
@@ -165,7 +172,8 @@ export const getMainPlotData = createSelector(
         categoryToGroupBy,
         colorsForPlot,
         categoricalFeatures,
-        symbols
+        symbols,
+        colorRange
     ): GroupedPlotData | ContinuousPlotData => {
         // Only preserve values at indices where both x and y values are not null,
         // because a coordinate like (3, null) won't be plotted anyway and produces
@@ -188,6 +196,7 @@ export const getMainPlotData = createSelector(
             return {
                 color: categoryToColorBy === categoryToGroupBy ? undefined : colorByValues,
                 dataType: DataType.CONTINUOUS,
+                colorRange,
                 ids,
                 x: newXAndYValues.xValues,
                 y: newXAndYValues.yValues,
@@ -437,6 +446,8 @@ function colorSettings(
         marker: {
             ...plotSettings.marker,
             color: plotData.color,
+            cmin: plotData.colorRange?.[0],
+            cmax: plotData.colorRange?.[1],
             opacity: plotData.opacity ?? mainPlotSettings.unselectedCircleOpacity,
         },
     };

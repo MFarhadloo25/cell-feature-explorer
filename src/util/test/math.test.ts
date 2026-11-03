@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 
-import { getMovingAverage } from "../math";
+import { getMovingAverage, numericRange } from "../math";
 
 describe("getMovingAverage", () => {
     it("handles window size of 0", () => {
@@ -78,5 +78,16 @@ describe("getMovingAverage", () => {
         const values = [10, 20, NaN, NaN, NaN, Infinity];
         const result = getMovingAverage(values, 3, true);
         expect(result).to.deep.equal([15, 15, 20, NaN, NaN, NaN]);
+    });
+});
+
+describe("numericRange", () => {
+    it("ignores nulls, NaN and non-numbers", () => {
+        expect(numericRange([5, null, 2, NaN, "x", 9])).toEqual([2, 9]);
+    });
+
+    it("is undefined when there are no numbers", () => {
+        expect(numericRange([null, "a"])).toBeUndefined();
+        expect(numericRange(undefined)).toBeUndefined();
     });
 });

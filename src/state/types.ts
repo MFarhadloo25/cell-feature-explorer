@@ -86,6 +86,8 @@ export interface ContinuousPlotData {
     opacity?: number[];
     /** Marker symbol per point (Shape By); circles when omitted. */
     symbols?: string[];
+    /** Color scale range from the unfiltered data, so filtering does not rescale the colors. */
+    colorRange?: [number, number];
     plotName?: string;
     dataType: DataType.CONTINUOUS;
 }

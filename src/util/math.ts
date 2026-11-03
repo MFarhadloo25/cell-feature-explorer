@@ -43,3 +43,16 @@ export function getMovingAverage(
     }
     return ret;
 }
+
+/** [min, max] of the finite numbers in `values`, or undefined when there are none. */
+export function numericRange(values: unknown[] | undefined): [number, number] | undefined {
+    let min = Infinity;
+    let max = -Infinity;
+    for (const v of values ?? []) {
+        if (typeof v === "number" && isFinite(v)) {
+            min = Math.min(min, v);
+            max = Math.max(max, v);
+        }
+    }
+    return min <= max ? [min, max] : undefined;
+}
