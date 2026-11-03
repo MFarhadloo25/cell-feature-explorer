@@ -15,6 +15,8 @@ import { State } from "../../state/types";
 import { ChangeSelectionAction } from "../../state/selection/types";
 import { LoadCsvDatasetAction, Megaset } from "../../state/image-dataset/types";
 import { RequestAction } from "../../state/metadata/types";
+import ThemeToggle from "../../components/ThemeToggle";
+import { useThemeMode } from "../../hooks";
 import { fetchCsvText } from "../../util";
 import { CSV_DATASET_NAME } from "../../state/selection/constants";
 
@@ -97,6 +99,44 @@ const configProviderTheme = {
     },
 };
 
+const lightConfigProviderTheme = {
+    ...configProviderTheme,
+    algorithm: theme.defaultAlgorithm,
+    token: {
+        ...configProviderTheme.token,
+        colorBgBase: "#ffffff",
+        colorTextHeading: "#000000",
+        colorIcon: "#000000",
+        colorBgElevated: "#ffffff",
+    },
+    components: {
+        ...configProviderTheme.components,
+        Collapse: { contentBg: "#ffffff", headerBg: "#f0f0f0" },
+        Layout: { headerBg: "#e6e6e6", headerColor: "#000000", siderBg: "#ffffff" },
+        Modal: { contentBg: "#ffffff", headerBg: "#ffffff", colorIcon: "#595959" },
+        Menu: { colorBgElevated: "#ffffff" },
+        Select: { colorTextQuaternary: "#000000" },
+        Slider: {
+            trackBg: "#8c8c8c",
+            trackHoverBg: "#595959",
+            handleColor: "#000000",
+            dotActiveBorderColor: "#000000",
+            handleActiveColor: "#000000",
+            colorPrimaryBorderHover: "#000000",
+        },
+    },
+};
+
+/** antd's theme follows the whole-window dark/white switch. */
+const ThemedConfigProvider = ({ children }: { children: React.ReactNode }) => {
+    const [mode] = useThemeMode();
+    return (
+        <ConfigProvider theme={mode === "light" ? lightConfigProviderTheme : configProviderTheme}>
+            {children}
+        </ConfigProvider>
+    );
+};
+
 class App extends React.Component<AppProps> {
     public componentDidMount = () => {
         if (this.props.selectedDataset === CSV_DATASET_NAME) {
@@ -133,7 +173,7 @@ class App extends React.Component<AppProps> {
         ]);
 
         return (
-            <ConfigProvider theme={configProviderTheme}>
+            <ThemedConfigProvider>
                 <div
                     className={classNames([
                         styles.wrapper,
@@ -157,7 +197,9 @@ class App extends React.Component<AppProps> {
                         </Layout>
                     </Layout>
                 </div>
-            </ConfigProvider>
+                {/* With a dataset open, the switch lives in the plot toolbar. */}
+                {!selectedDataset && <ThemeToggle floating />}
+            </ThemedConfigProvider>
         );
     }
 }

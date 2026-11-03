@@ -10,10 +10,14 @@ import type {
 } from "plotly.js";
 import React, { useState } from "react";
 import { createPortal } from "react-dom";
+import Plotly from "plotly.js/dist/plotly";
 import Plot from "react-plotly.js";
 
-import { GENERAL_PLOT_SETTINGS } from "../../constants";
+import { GENERAL_PLOT_SETTINGS, SCATTER_PLOT_NAME } from "../../constants";
+import { useThemeMode } from "../../hooks";
 import { TickConversion } from "../../state/selection/types";
+import ExportFigure from "../ExportFigure";
+import type { LegendSection } from "../ExportFigure/figure";
 import PlotSettings from "../PlotSettings";
 import { ICON_SVG_PATH_PLOT_SETTINGS } from "./constants";
 
@@ -26,12 +30,19 @@ interface MainPlotProps {
     onPointHovered: (hovered: PlotMouseEvent) => void;
     onPointUnhovered: (unhovered: PlotMouseEvent) => void;
     onGroupSelected: (selected: PlotSelectionEvent) => void;
+    canExportCsv: boolean;
+    onExportCsv: () => void;
+    leadingControls?: React.ReactNode;
     xAxisType: AxisType;
     yAxisType: AxisType;
     xTickConversion: TickConversion;
     yTickConversion: TickConversion;
     xAxisRange?: [number, number];
     yAxisRange?: [number, number];
+    xTitle: string;
+    yTitle: string;
+    colorByTitle: string;
+    legendSections: LegendSection[];
 }
 
 type AxisType = "array" | "auto" | "linear" | undefined;
@@ -54,9 +65,10 @@ const PLOT_CONFIG: Partial<Config> = {
     responsive: true,
     displayModeBar: true,
     displaylogo: false,
+    // Camera button in the mode bar: PNG at 2x the on-screen pixels (4x exceeded WebGL limits and exported a blank image).
+    toImageButtonOptions: { format: "png", filename: "cell-feature-explorer", scale: 2 },
     modeBarButtonsToRemove: [
         "sendDataToCloud",
-        "toImage",
         "resetScale2d",
         "hoverClosestCartesian",
         "hoverCompareCartesian",
@@ -67,6 +79,7 @@ const PLOT_CONFIG: Partial<Config> = {
 const POPUP_ANNOTATION_OFFSET_PX = 60;
 
 const MainPlot: React.FC<MainPlotProps> = (props) => {
+    const resizeObserverRef = React.useRef<ResizeObserver>();
     const [showFullAnnotation, setShowFullAnnotation] = React.useState(true);
     const [height, setHeight] = React.useState(window.innerHeight);
     const [helpTextPos, setHelpTextPos] = React.useState<{ x: number; y: number } | null>(null);
@@ -175,19 +188,23 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
 
     const { xAxisType, xTickConversion, xAxisRange, yAxisType, yTickConversion, yAxisRange } =
         props;
+    const [themeMode] = useThemeMode();
+    const lightMode = themeMode === "light";
     const layout = React.useMemo((): Partial<Layout> => {
+        const textColor = lightMode ? "#000000" : GENERAL_PLOT_SETTINGS.textColor;
+        const backgroundColor = lightMode ? "#ffffff" : GENERAL_PLOT_SETTINGS.backgroundColor;
         const makeAxis = (type: AxisType, tickConversion: any, range?: [number, number]) => ({
-            color: GENERAL_PLOT_SETTINGS.textColor,
+            color: textColor,
             domain: [0, 1],
             hoverformat: ".1f",
-            linecolor: GENERAL_PLOT_SETTINGS.textColor,
+            linecolor: textColor,
             showgrid: false,
             showspikes: true,
-            spikecolor: GENERAL_PLOT_SETTINGS.spikeColor,
+            spikecolor: lightMode ? "rgba(0, 0, 0, 0.5)" : GENERAL_PLOT_SETTINGS.spikeColor,
             spikethickness: 2,
             spikedash: "dot",
             spikemode: "toaxis+marker" as const,
-            tickcolor: GENERAL_PLOT_SETTINGS.textColor,
+            tickcolor: textColor,
             tickmode: type,
             ticktext: tickConversion.tickText,
             tickvals: tickConversion.tickValues,
@@ -200,10 +217,11 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
             autosize: true,
             height: height - GENERAL_PLOT_SETTINGS.heightMargin,
             hovermode: "closest",
+            font: { color: textColor },
             legend: GENERAL_PLOT_SETTINGS.legend,
             margin: GENERAL_PLOT_SETTINGS.margin,
-            paper_bgcolor: GENERAL_PLOT_SETTINGS.backgroundColor,
-            plot_bgcolor: GENERAL_PLOT_SETTINGS.backgroundColor,
+            paper_bgcolor: backgroundColor,
+            plot_bgcolor: backgroundColor,
             xaxis: makeAxis(xAxisType, xTickConversion, xAxisRange && padAxisRange(xAxisRange)),
             yaxis: makeAxis(yAxisType, yTickConversion, yAxisRange && padAxisRange(yAxisRange)),
             // Constant value prevents the plot from resetting on
@@ -212,6 +230,7 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
         };
     }, [
         height,
+        lightMode,
         updatedAnnotations,
         xAxisType,
         xTickConversion,
@@ -234,9 +253,30 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
     // Stable — only sets the ref; onAfterPlot handles position computation.
     const handleInitialized = React.useCallback((_figure: any, gd: any) => {
         graphDivRef.current = gd;
+        // Plotly only resizes on window resize; also follow the container (e.g. when the side panel is hidden).
+        resizeObserverRef.current?.disconnect();
+        resizeObserverRef.current = new ResizeObserver(() =>
+            window.dispatchEvent(new Event("resize"))
+        );
+        if (gd.parentElement) {
+            resizeObserverRef.current.observe(gd.parentElement);
+        }
     }, []);
+    React.useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
 
     const { onPointHovered, onPointUnhovered, onGroupSelected, plotDataArray } = props;
+    // Plotly keeps its own selection by point position (the uirevision keeps it across updates), so
+    // when points are removed or filtered it would mark the wrong points. Selected sets live in
+    // redux and are drawn as their own trace, so clearing Plotly's copy loses nothing.
+    const visiblePointCount = (plotDataArray as any[]).reduce(
+        (n, trace) => (trace.name === SCATTER_PLOT_NAME ? n + (trace.x?.length ?? 0) : n),
+        0
+    );
+    React.useEffect(() => {
+        if (graphDivRef.current) {
+            Plotly.restyle(graphDivRef.current, { selectedpoints: [null] } as any);
+        }
+    }, [visiblePointCount]);
     const lastAnnotation = annotations.length > 0 ? annotations[annotations.length - 1] : null;
 
     const [showConfigPopup, setShowConfigPopup] = useState(false);
@@ -275,9 +315,25 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
 
     return (
         <>
+            <div className={styles.toolbar}>
+                {props.leadingControls}
+                <ExportFigure
+                    traces={plotDataArray}
+                    layout={layout}
+                    xTitle={props.xTitle}
+                    yTitle={props.yTitle}
+                    colorByTitle={props.colorByTitle}
+                    legendSections={props.legendSections}
+                />
+                <Button size="small" disabled={!props.canExportCsv} onClick={props.onExportCsv}>
+                    Export CSV
+                </Button>
+            </div>
             <Plot
                 data={plotDataArray}
                 useResizeHandler={true}
+                // react-plotly's default inline-block box keeps its old width; Plotly measures this div.
+                style={{ width: "100%" }}
                 layout={layout}
                 config={config}
                 onClick={handlePointClick}

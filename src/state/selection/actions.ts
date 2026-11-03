@@ -39,6 +39,10 @@ import {
     SET_COLOR_OVERRIDES,
     SET_POINT_RADIUS,
     SET_POINT_OPACITY,
+    SET_COLOR_SCALE,
+    ADD_REMOVED_SET,
+    TOGGLE_REMOVED_SET,
+    DELETE_REMOVED_SET,
     CHANGE_CONNECT_BY_CATEGORY,
     CHANGE_CONNECT_BY_FEATURE,
     SET_SHOW_CONNECT_LINES,
@@ -76,6 +80,9 @@ import {
     SetLineOpacityAction,
     SetLineWidthAction,
     SetPointOpacityAction,
+    SetColorScaleAction,
+    AddRemovedSetAction,
+    RemovedSetIdAction,
     SetPointRadiusAction,
     SyncStateWithURLAction,
     ColumnFilter,
@@ -217,6 +224,23 @@ export function setPointOpacity(payload: number): SetPointOpacityAction {
         payload,
         type: SET_POINT_OPACITY,
     };
+}
+
+/** Moves a group of cells out of the plot (switched on = hidden). */
+export function addRemovedSet(payload: AddRemovedSetAction["payload"]): AddRemovedSetAction {
+    return { payload, type: ADD_REMOVED_SET };
+}
+
+export function toggleRemovedSet(payload: string): RemovedSetIdAction {
+    return { payload, type: TOGGLE_REMOVED_SET };
+}
+
+export function deleteRemovedSet(payload: string): RemovedSetIdAction {
+    return { payload, type: DELETE_REMOVED_SET };
+}
+
+export function setColorScale(payload: string): SetColorScaleAction {
+    return { payload, type: SET_COLOR_SCALE };
 }
 
 export function toggleFilterByCategoryName(payload: string): ChangeSelectionAction {

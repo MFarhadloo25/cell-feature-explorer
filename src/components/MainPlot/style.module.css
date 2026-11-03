@@ -6,11 +6,24 @@
     background: var(--text-gray);
     border: 1px solid rgba(255, 255, 255, 0.67);
     border-radius: 2px;
-    color: var(--white);
+    color: #ffffff;
     cursor: pointer;
     font-size: 11px;
     padding: 4px;
     text-align: left;
     white-space: nowrap;
     z-index: 10;
+}
+
+/* One row for every top-left control, so they cannot overlap; it wraps instead of running under the
+   Plotly mode bar on the right. */
+.toolbar {
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    max-width: calc(100% - 220px);
+    z-index: 10;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
 }

@@ -30,6 +30,7 @@ import { findFeature, getCategoryString, getFileInfoDatumFromCellId, sortNumeric
 import {
     combineMasks,
     computeAvailableValues,
+    computeExcludedMask,
     computeHiddenMask,
     computeRowMask,
     computeTrackInfo,
@@ -40,6 +41,7 @@ import { MISSING_CATEGORY_COLOR, MISSING_CATEGORY_LABEL } from "./constants";
 import {
     ColorForPlot,
     ColumnFilter,
+    RemovedSet,
     DownloadConfig,
     LassoOrBoxSelectPointData,
     MainPlotSettings,
@@ -72,6 +74,12 @@ export const getColorOverrides = (state: State): (string | undefined)[] =>
 export const getPointRadius = (state: State): number => state.selection.pointRadius;
 /** Returns the opacity of points in the plot, in a [0, 1] range. */
 export const getPointOpacity = (state: State): number => state.selection.pointOpacity;
+export const getColorScale = (state: State): string => state.selection.colorScale;
+export const getRemovedSets = (state: State): RemovedSet[] => state.selection.removedSets;
+/** Cell ids hidden by the active removed sets. */
+export const getExcludedCellIds = createSelector([getRemovedSets], (sets): string[] =>
+    sets.filter((set) => set.active).flatMap((set) => set.cellIds)
+);
 export const getSelectionSetColors = (state: State): { [key: string]: string } =>
     state.selection.selectedGroupColors;
 export const getFiltersToExclude = (state: State): string[] => state.selection.filterExclude;
@@ -395,9 +403,25 @@ export const getTrackInfo = createSelector(
 );
 
 /** Per-row pass/fail for the persistent filters, or null when none are active. */
-export const getFilterRowMask = createSelector(
+const getColumnFilterRowMask = createSelector(
     [getPerCellDataForPlot, getMeasuredFeaturesDefs, getFilters, getTrackInfo],
     computeRowMask
+);
+
+export const getExcludedMask = createSelector(
+    [getPerCellDataForPlot, getExcludedCellIds],
+    computeExcludedMask
+);
+
+/** Rows eligible under the column filters and not removed as outliers; counts and legends build on this. */
+export const getFilterRowMask = createSelector(
+    [getColumnFilterRowMask, getExcludedMask],
+    combineMasks
+);
+
+/** How many cells of the loaded dataset are currently removed. */
+export const getExcludedCount = createSelector([getExcludedMask], (mask) =>
+    mask ? mask.filter((keep) => !keep).length : 0
 );
 
 /** Per filtered column, the values still available given the other filters (in the column's option order). */
@@ -689,13 +713,21 @@ export const getSelected3DCellFeatureData = createSelector(
 
 // LASSOED or BOX SELECTED GROUPS SELECTORS
 export const getSelectedGroupsData = createSelector(
-    [getPerCellDataForPlot, getSelectedGroups, getPlotByOnX, getPlotByOnY, getSelectionSetColors],
+    [
+        getPerCellDataForPlot,
+        getSelectedGroups,
+        getPlotByOnX,
+        getPlotByOnY,
+        getSelectionSetColors,
+        getRowMask,
+    ],
     (
         metaData,
         selectedGroups,
         plotByOnX,
         plotByOnY,
-        selectedGroupColorMapping
+        selectedGroupColorMapping,
+        rowMask
     ): {
         x: (number | null)[];
         y: (number | null)[];
@@ -708,6 +740,10 @@ export const getSelectedGroupsData = createSelector(
         mapValues(selectedGroups, (value, key: string) => {
             // for each point index, get x, y, and color for the point.
             value.forEach((point: LassoOrBoxSelectPointData) => {
+                // Points hidden by filters or a removed set are not highlighted either.
+                if (rowMask && !rowMask[point.pointIndex]) {
+                    return;
+                }
                 colorArray.push(selectedGroupColorMapping[key]);
                 xValues.push(metaData.values[plotByOnX][point.pointIndex]);
                 yValues.push(metaData.values[plotByOnY][point.pointIndex]);

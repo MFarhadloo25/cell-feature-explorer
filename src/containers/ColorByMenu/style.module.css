@@ -6,7 +6,7 @@
 }
 
 :global(.ant-select.ant-select-enabled) {
-  color: #ffffff;
+  color: var(--white);
 }
 
 :global(.ant-radio-button-wrapper-disabled.ant-radio-button-wrapper-checked){

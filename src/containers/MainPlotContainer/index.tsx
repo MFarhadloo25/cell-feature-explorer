@@ -47,10 +47,16 @@ import {
     getXAxisRange,
     getYAxisRange,
     getAnnotations,
+    getColorByTitle,
+    getExportLegendSections,
     getConnectByFeatureDisplayName,
     getFormattedHoveredConnectByFeatureValue,
 } from "./selectors";
+import type { LegendSection } from "../../components/ExportFigure/figure";
 import { getFeatureDefTooltip } from "../../state/selection/selectors";
+import { getImageDataset } from "../../state/image-dataset/selectors";
+import CsvRequest from "../../state/image-dataset/csv-dataset";
+import { downloadText, rowsToCsv } from "../../util/exportCsv";
 import { formatThumbnailSrc } from "../../state/util";
 import { createThumbnailImageSrc } from "../../util/thumbnails";
 
@@ -61,6 +67,10 @@ const MAX_GENERATED_THUMBNAILS = 250;
 
 interface PropsFromState {
     annotations: PlotlyAnnotation[];
+    legendSections: LegendSection[];
+    colorByTitle: string;
+    csvDataset: CsvRequest | undefined;
+    keptCellIds: string[];
     categoricalFeatures: string[];
     clickedPoints: string[];
     filtersToExclude: string[];
@@ -99,6 +109,8 @@ interface DispatchProps {
 interface PropsFromApp {
     // props from <App />
     handleSelectionToolUsed: () => void;
+    /** Rendered at the start of the plot's top-left toolbar. */
+    leadingControls?: React.ReactNode;
 }
 
 type MainPlotContainerProps = PropsFromState & DispatchProps & PropsFromApp;
@@ -126,6 +138,7 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
         this.onPointHovered = this.onPointHovered.bind(this);
         this.onPointUnhovered = this.onPointUnhovered.bind(this);
         this.onGroupSelected = this.onGroupSelected.bind(this);
+        this.onExportCsv = this.onExportCsv.bind(this);
         this.onPlotUnhovered = this.onPlotUnhovered.bind(this);
         this.renderPopover = this.renderPopover.bind(this);
     }
@@ -228,6 +241,16 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
         }
     }
 
+    public onExportCsv() {
+        const { csvDataset, keptCellIds } = this.props;
+        if (csvDataset) {
+            downloadText(
+                "cell-feature-explorer-points.csv",
+                rowsToCsv(csvDataset.csvData, csvDataset.idToIndex, keptCellIds)
+            );
+        }
+    }
+
     public onGroupSelected(eventData: any) {
         if (!eventData) {
             return;
@@ -302,6 +325,10 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
             categoricalFeatures,
             xAxisRange,
             yAxisRange,
+            legendSections,
+            colorByTitle,
+            xDisplayName,
+            yDisplayName,
         } = this.props;
         if (plotDataArray.length === 0) {
             return null;
@@ -362,6 +389,9 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
                         onPointClicked={this.onPointClicked}
                         annotations={annotations}
                         onGroupSelected={this.onGroupSelected}
+                        canExportCsv={!!this.props.csvDataset}
+                        onExportCsv={this.onExportCsv}
+                        leadingControls={this.props.leadingControls}
                         onPointHovered={this.onPointHovered}
                         onPointUnhovered={this.onPointUnhovered}
                         xAxisType={includes(categoricalFeatures, xDropDownValue) ? "array" : "auto"}
@@ -370,6 +400,10 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
                         yTickConversion={yTickConversion}
                         xAxisRange={xAxisRange}
                         yAxisRange={yAxisRange}
+                        xTitle={xDisplayName}
+                        yTitle={yDisplayName}
+                        colorByTitle={colorByTitle}
+                        legendSections={legendSections}
                     />
                 </div>
             </>
@@ -380,6 +414,12 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
 function mapStateToProps(state: State): PropsFromState {
     return {
         annotations: getAnnotations(state),
+        legendSections: getExportLegendSections(state),
+        colorByTitle: getColorByTitle(state),
+        // Only CSV datasets keep the original rows needed to export a reloadable file.
+        csvDataset: ((d) => (d instanceof CsvRequest ? d : undefined))(getImageDataset(state)),
+        keptCellIds:
+            selectionStateBranch.selectors.getFilteredCellData(state).labels?.cellIds ?? [],
         clickedPoints: selectionStateBranch.selectors.getClickedScatterPoints(state),
         categoricalFeatures: metadataStateBranch.selectors.getCategoricalFeatureKeys(state),
         filtersToExclude: selectionStateBranch.selectors.getFiltersToExclude(state),

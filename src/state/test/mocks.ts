@@ -179,6 +179,8 @@ export const mockState = {
         groupBy: INITIAL_COLOR_AND_GROUP_BY,
         filterExclude: [],
         filters: [],
+        colorScale: "",
+        removedSets: [],
         shapeBy: "",
         shapeOverrides: {},
         shapeHidden: {},

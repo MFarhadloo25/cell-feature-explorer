@@ -194,6 +194,15 @@ export function combineMasks(a: boolean[] | null, b: boolean[] | null): boolean[
     return a.map((pass, i) => pass && b[i]);
 }
 
+/** Rows whose cell id is not in `excludedIds`; null when nothing is excluded. */
+export function computeExcludedMask(data: DataForPlot, excludedIds: string[]): boolean[] | null {
+    if (!excludedIds.length || !data?.labels?.cellIds) {
+        return null;
+    }
+    const excluded = new Set(excludedIds);
+    return data.labels.cellIds.map((id: string) => !excluded.has(id));
+}
+
 export function summarizeMask(mask: boolean[] | null, trackInfo: TrackInfo, total: number) {
     if (!mask) {
         return { samples: total, tracks: trackInfo.timepointCounts.size };

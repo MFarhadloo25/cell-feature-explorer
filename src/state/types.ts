@@ -86,6 +86,12 @@ export interface ContinuousPlotData {
     opacity?: number[];
     /** Marker symbol per point (Shape By); circles when omitted. */
     symbols?: string[];
+    /** Color scale range from the unfiltered data, so filtering does not rescale the colors. */
+    colorRange?: [number, number];
+    /** Plotly colorscale name; undefined uses Plotly's default. */
+    colorScale?: string;
+    /** Display name of the color-by column, titles the scale bar. */
+    colorLabel?: string;
     plotName?: string;
     dataType: DataType.CONTINUOUS;
 }

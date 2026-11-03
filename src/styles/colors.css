@@ -21,4 +21,30 @@
     --megacard-background: var(--background-dim-gray);
     --link-text: var(--bright-blue);
     --white: #ffffff;
+    --text-soft: #ffffffc4;
+    --plot-area-background: #000000;
+    --gallery-background: #4b4b4bd1;
+    --gallery-trigger-background: #000000a1;
+}
+
+/* Whole-window white mode, switched by hooks/useThemeMode. --white is used for text, so it flips to dark. */
+:root[data-theme="light"] {
+    --background-dark-gray: #f0f0f0;
+    --background-black-purple: #fafafa;
+    --background-dim-gray: #e6e6e6;
+    --dimgray: #bfbfbf;
+    --text-gray: #595959;
+    --header-gray: #d9d9d9;
+    --panel-body-background-gray: #f5f5f5;
+    --viewer-header-background-gray: #f5f5f5;
+    --page-background-gray: #f5f5f5;
+    --light-gray: #8c8c8c;
+    --off-white: #1f1f1f;
+    --dark-theme-text-color: #1f1f1f;
+    --megacard-background: #ffffff;
+    --white: #000000;
+    --text-soft: #000000c4;
+    --plot-area-background: #ffffff;
+    --gallery-background: #f0f0f0f2;
+    --gallery-trigger-background: #ffffffa1;
 }

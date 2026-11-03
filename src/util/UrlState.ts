@@ -39,6 +39,7 @@ import {
     setConnectLineWidth,
     setCsvUrl,
     setPointOpacity,
+    setColorScale,
     setPointRadius,
     setShowConnectLines,
     toggleGallery,
@@ -70,6 +71,7 @@ export enum URLSearchParam {
     colorOverrides = "colorOverrides",
     plotPointRadius = "ptRadius",
     plotPointOpacity = "ptOpacity",
+    colorScale = "colorScale",
     filters = "filters",
     shapeBy = "shapeBy",
     shapeOverrides = "shapeOverrides",
@@ -279,6 +281,7 @@ export default class UrlState {
         },
         [URLSearchParam.plotPointRadius]: (pointRadius) => setPointRadius(Number(pointRadius)),
         [URLSearchParam.plotPointOpacity]: (pointOpacity) => setPointOpacity(Number(pointOpacity)),
+        [URLSearchParam.colorScale]: (scale) => setColorScale(String(scale)),
         [URLSearchParam.filters]: (filters) =>
             setFilters(UrlState.parseFiltersParam(String(filters))),
         [URLSearchParam.shapeBy]: (shapeBy) => changeAxis(SHAPE_BY_SELECTOR, String(shapeBy)),
@@ -350,6 +353,7 @@ export default class UrlState {
         [URLSearchParam.plotPointRadius]: (pointRadius) => ({
             pointRadius: Number(pointRadius),
         }),
+        [URLSearchParam.colorScale]: (scale) => ({ colorScale: String(scale) }),
         [URLSearchParam.plotPointOpacity]: (pointOpacity) => ({
             pointOpacity: Number(pointOpacity),
         }),
@@ -396,6 +400,7 @@ export default class UrlState {
         }),
         pointRadius: (value) => ({ [URLSearchParam.plotPointRadius]: String(value) }),
         pointOpacity: (value) => ({ [URLSearchParam.plotPointOpacity]: String(value) }),
+        colorScale: (value) => ({ [URLSearchParam.colorScale]: String(value) }),
         filters: (value: ColumnFilter[]) => ({ [URLSearchParam.filters]: JSON.stringify(value) }),
         [SHAPE_BY_SELECTOR]: (value) => ({ [URLSearchParam.shapeBy]: String(value) }),
         shapeOverrides: (value) => ({ [URLSearchParam.shapeOverrides]: JSON.stringify(value) }),

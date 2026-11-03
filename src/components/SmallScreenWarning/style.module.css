@@ -14,7 +14,7 @@
 
 :global(.ant-modal-header) :global(.ant-modal-title) {
     font-size: 1.1rem;
-    color: #fff;
+    color: var(--white);
 }
 
 div:global(.ant-modal-mask):global(.ant-modal-mask) {

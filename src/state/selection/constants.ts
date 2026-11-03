@@ -25,6 +25,10 @@ export const SET_COLOR_OVERRIDE = makeSelectionConstant("set-color-override");
 export const SET_COLOR_OVERRIDES = makeSelectionConstant("set-color-overrides");
 export const SET_POINT_RADIUS = makeSelectionConstant("set-point-radius");
 export const SET_POINT_OPACITY = makeSelectionConstant("set-point-opacity");
+export const SET_COLOR_SCALE = makeSelectionConstant("set-color-scale");
+export const ADD_REMOVED_SET = makeSelectionConstant("add-removed-set");
+export const TOGGLE_REMOVED_SET = makeSelectionConstant("toggle-removed-set");
+export const DELETE_REMOVED_SET = makeSelectionConstant("delete-removed-set");
 export const TOGGLE_FILTER_BY_CATEGORY_NAME = makeSelectionConstant(
     "toggle-filter-by-category-name"
 );

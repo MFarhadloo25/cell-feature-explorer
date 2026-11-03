@@ -11,6 +11,7 @@ import {
     SCATTER_PLOT_NAME,
     SELECTIONS_PLOT_NAME,
     THUMBNAIL_PATH,
+    GENERAL_PLOT_SETTINGS,
 } from "../../constants";
 import {
     getCategoricalFeatureKeys,
@@ -51,6 +52,11 @@ import {
     getConnectByCategory,
     getFiltersToExclude,
     getFilteredShapeValues,
+    getShapeBy,
+    getShapeLegend,
+    getColorScale,
+    getExcludedMask,
+    getRowMask,
 } from "../../state/selection/selectors";
 import {
     ColorForPlot,
@@ -58,6 +64,8 @@ import {
     SelectedPointData,
     TickConversion,
 } from "../../state/selection/types";
+import type { LegendSection } from "../../components/ExportFigure/figure";
+import { getLegendColors } from "../ColorByMenu/selectors";
 import {
     AnnotationData,
     ContinuousPlotData,
@@ -69,7 +77,7 @@ import {
 import { findFeature } from "../../state/util";
 import { getGroupByTitle } from "../ColorByMenu/selectors";
 import { PlotlyAnnotation } from "../../components/MainPlot";
-import { getMovingAverage } from "../../util/math";
+import { getMovingAverage, numericRange } from "../../util/math";
 
 export const handleNullValues = (
     inputXValues: (number | null)[],
@@ -138,6 +146,27 @@ export const getPlotlyCustomData = createSelector(
     }
 );
 
+export const getColorByTitle = createSelector(
+    [getColorBySelection, getMeasuredFeaturesDefs],
+    (colorBy, defs): string => defs.find((d) => d.key === colorBy)?.displayName ?? String(colorBy)
+);
+
+/** Full-dataset range of the color-by column; filters and legend hiding must not rescale numeric colors. */
+const getColorByRange = createSelector(
+    [getPerCellDataForPlot, getColorBySelection],
+    (data, colorBy) => numericRange(data.values?.[colorBy as string])
+);
+
+/** Range, scale and label for a numeric color-by (one selector: reselect's typings stop at 12 inputs). */
+const getNumericColorInfo = createSelector(
+    [getColorByRange, getColorScale, getColorByTitle],
+    (colorRange, colorScale, colorLabel) => ({
+        colorRange,
+        colorScale: colorScale || undefined,
+        colorLabel,
+    })
+);
+
 export const getMainPlotData = createSelector(
     [
         getFilteredXValues,
@@ -150,6 +179,7 @@ export const getMainPlotData = createSelector(
         getCategoryGroupColorsAndNames,
         getCategoricalFeatureKeys,
         getFilteredShapeValues,
+        getNumericColorInfo,
     ],
     (
         xValues,
@@ -161,7 +191,8 @@ export const getMainPlotData = createSelector(
         categoryToGroupBy,
         colorsForPlot,
         categoricalFeatures,
-        symbols
+        symbols,
+        numericColorInfo
     ): GroupedPlotData | ContinuousPlotData => {
         // Only preserve values at indices where both x and y values are not null,
         // because a coordinate like (3, null) won't be plotted anyway and produces
@@ -184,6 +215,7 @@ export const getMainPlotData = createSelector(
             return {
                 color: categoryToColorBy === categoryToGroupBy ? undefined : colorByValues,
                 dataType: DataType.CONTINUOUS,
+                ...numericColorInfo,
                 ids,
                 x: newXAndYValues.xValues,
                 y: newXAndYValues.yValues,
@@ -305,6 +337,7 @@ const getAnnotationData = createSelector(
         getPlotByOnY,
         getGroupingCategoryNamesAsArray,
         getHoveredCardId,
+        getRowMask,
     ],
     (
         allCellData: DataForPlot,
@@ -313,7 +346,8 @@ const getAnnotationData = createSelector(
         xAxis,
         yAxis,
         groupByCategoryNames,
-        currentHoveredCellId
+        currentHoveredCellId,
+        rowMask
     ): AnnotationData[] => {
         if (isEmpty(allCellData.values) || isEmpty(allCellData.labels)) {
             return [];
@@ -337,7 +371,7 @@ const getAnnotationData = createSelector(
 
             // Apply filtering
             const groupName = groupByCategoryNames[pointIndex] ?? null;
-            if (filtersToExclude.includes(groupName)) {
+            if (filtersToExclude.includes(groupName) || (rowMask && !rowMask[pointIndex])) {
                 return acc;
             }
 
@@ -398,6 +432,12 @@ export const composePlotlyData = createSelector(
     }
 );
 
+const SCALE_BAR_FONT = {
+    color: GENERAL_PLOT_SETTINGS.textColor,
+    family: "Open Sans, verdana, arial, sans-serif",
+    size: 12,
+};
+
 function colorSettings(
     plotSettings: Partial<PlotData>,
     plotData: GroupedPlotData | ContinuousPlotData,
@@ -433,6 +473,19 @@ function colorSettings(
         marker: {
             ...plotSettings.marker,
             color: plotData.color,
+            cmin: plotData.colorRange?.[0],
+            cmax: plotData.colorRange?.[1],
+            colorscale: plotData.colorScale,
+            // Scale bar for numeric color-by; only the main trace has a colorRange.
+            showscale: !!plotData.colorRange,
+            colorbar: {
+                title: { text: plotData.colorLabel, font: SCALE_BAR_FONT },
+                tickfont: SCALE_BAR_FONT,
+                thickness: 14,
+                len: 0.6,
+                outlinewidth: 0,
+                // the bundled typings predate `title.text`
+            } as any,
             opacity: plotData.opacity ?? mainPlotSettings.unselectedCircleOpacity,
         },
     };
@@ -640,18 +693,20 @@ const getAxisRange = (values: (number | null)[]): [number, number] | undefined =
     return [min, max];
 };
 
+// Cells in an active removed set do not count, so the axes refit to the points that remain.
+const withoutRemoved = (values: (number | null)[], keep: boolean[] | null) =>
+    keep ? values.filter((_, i) => keep[i]) : values;
+
 export const getXAxisRange = createSelector(
-    [getXValues],
-    (xValues: (number | null)[]): [number, number] | undefined => {
-        return getAxisRange(xValues);
-    }
+    [getXValues, getExcludedMask],
+    (xValues: (number | null)[], keep): [number, number] | undefined =>
+        getAxisRange(withoutRemoved(xValues, keep))
 );
 
 export const getYAxisRange = createSelector(
-    [getYValues],
-    (yValues: (number | null)[]): [number, number] | undefined => {
-        return getAxisRange(yValues);
-    }
+    [getYValues, getExcludedMask],
+    (yValues: (number | null)[], keep): [number, number] | undefined =>
+        getAxisRange(withoutRemoved(yValues, keep))
 );
 
 export const getXDisplayName = createSelector(
@@ -725,5 +780,28 @@ export const getFormattedHoveredConnectByFeatureValue = createSelector(
     (hoveredPointData, categoricalFeatures, connectByKey, tickConversion): string => {
         const value = hoveredPointData?.connectByFeatureValue ?? undefined;
         return formatAxisValue(value, includes(categoricalFeatures, connectByKey), tickConversion);
+    }
+);
+
+/** Legend blocks for exported figures; the on-screen legends live in the sidebar, outside the plot. */
+export const getExportLegendSections = createSelector(
+    [getLegendColors, getColorBySelection, getShapeBy, getShapeLegend, getMeasuredFeaturesDefs],
+    (colors, colorBy, shapeBy, shapeLegend, defs): LegendSection[] => {
+        const nameOf = (key: string) => defs.find((d) => d.key === key)?.displayName ?? key;
+        const sections: LegendSection[] = [];
+        if (colors.length) {
+            sections.push({
+                title: nameOf(colorBy as string),
+                entries: colors.map((c) => ({ name: c.label, color: c.color })),
+            });
+        }
+        const shapes = shapeLegend
+            .filter((row) => row.visible)
+            .sort((a, b) => b.total - a.total)
+            .map((row) => ({ name: row.name, symbol: row.shape }));
+        if (shapes.length) {
+            sections.push({ title: `Shape: ${nameOf(shapeBy)}`, entries: shapes });
+        }
+        return sections;
     }
 );

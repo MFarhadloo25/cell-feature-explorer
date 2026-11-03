@@ -13,6 +13,22 @@ export const SCATTER_PLOT_NAME = "features-scatter-plot";
 export const SELECTIONS_PLOT_NAME = "selections-scatter-plot";
 export const COLOR_BY_SELECTOR = "colorBy";
 export const GROUP_BY_KEY = "groupBy";
+/** Plotly colorscale names offered for a numeric color-by; "" is Plotly's default (grey to red). */
+export const COLOR_SCALES = [
+    { value: "", label: "Default (grey to red)" },
+    ...[
+        "Viridis",
+        "Cividis",
+        "Blues",
+        "Greens",
+        "Reds",
+        "YlOrRd",
+        "YlGnBu",
+        "RdBu",
+        "Hot",
+        "Portland",
+    ].map((name) => ({ value: name, label: name })),
+];
 export const SHAPE_BY_SELECTOR = "shapeBy";
 
 export const CELL_ID_KEY = "CellId";

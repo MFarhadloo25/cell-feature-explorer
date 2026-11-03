@@ -39,6 +39,10 @@ export interface SelectionStateBranch {
     colorOverrides: (string | undefined)[];
     pointRadius: number;
     pointOpacity: number;
+    /** Plotly colorscale name for a numeric color-by; "" is Plotly's default (grey to red). */
+    colorScale: string;
+    /** Groups of cells taken out of the plot (outliers/artifacts); active sets are hidden. Not saved in the URL. */
+    removedSets: RemovedSet[];
     selectedAlbum: number;
     selectedGroupColors: { [key: string]: string };
     selectedGroups: SelectedGroups;
@@ -269,6 +273,29 @@ export interface SetLineOpacityAction {
 
 export interface SetPointRadiusAction {
     payload: number;
+    type: string;
+}
+
+export interface RemovedSet {
+    id: string;
+    name: string;
+    cellIds: string[];
+    /** On = the cells are hidden from the plot. */
+    active: boolean;
+}
+
+export interface AddRemovedSetAction {
+    payload: Omit<RemovedSet, "active">;
+    type: string;
+}
+
+export interface RemovedSetIdAction {
+    payload: string;
+    type: string;
+}
+
+export interface SetColorScaleAction {
+    payload: string;
     type: string;
 }
 

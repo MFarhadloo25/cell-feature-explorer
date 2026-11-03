@@ -12,10 +12,13 @@ import ColorLegendRow from "../../components/ColorLegend";
 import LimitedList from "../../components/LimitedList";
 import ActiveFilters from "../../components/ActiveFilters";
 import CollapsiblePanel from "../../components/CollapsiblePanel";
+import RemovedSets from "../../components/RemovedSets";
 import ShapeBy from "../../components/ShapeBy";
 import ConnectByControl from "../../components/ConnectByControl";
+import SearchableSelect from "../../components/SearchableSelect";
 import {
     COLOR_BY_SELECTOR,
+    COLOR_SCALES,
     DOWNLOAD_CONFIG_TYPE_PROTEIN,
     DOWNLOAD_CONFIG_TYPE_SELECTION_SET,
 } from "../../constants";
@@ -33,6 +36,7 @@ import {
     DownloadConfig,
     SelectAxisAction,
     SetColorOverrideAction,
+    SetColorScaleAction,
 } from "../../state/selection/types";
 import { State } from "../../state/types";
 import { getColorByDisplayOptions, getGroupByDisplayOptions } from "../MainPlotContainer/selectors";
@@ -57,6 +61,7 @@ const { Panel } = Collapse;
 interface PropsFromState {
     // selector props
     colorBy: keyof MappingOfMeasuredValuesArrays;
+    colorScale: string;
     groupBy: keyof MappingOfMeasuredValuesArrays;
     downloadUrls: string[];
     downloadConfig: DownloadConfig;
@@ -76,6 +81,7 @@ interface PropsFromState {
 interface DispatchProps {
     handleApplyColorSwitchChange: ActionCreator<BoolToggleAction>;
     handleChangeAxis: ActionCreator<SelectAxisAction>;
+    handleSetColorScale: ActionCreator<SetColorScaleAction>;
     handleChangeGroupByCategory: ActionCreator<ChangeGroupByCategory>;
     handleCloseSelectionSet: ActionCreator<DeselectGroupOfPointsAction>;
     handleFilterByCategoryName: ActionCreator<ChangeSelectionAction>;
@@ -229,6 +235,8 @@ class ColorByMenu extends React.Component<ColorByMenuProps> {
             colorByMenuOptions,
             groupByDisplayOptions,
             handleChangeAxis,
+            handleSetColorScale,
+            colorScale,
             handleChangeGroupByCategory,
             colorForPlot,
             categoryCounts,
@@ -251,6 +259,20 @@ class ColorByMenu extends React.Component<ColorByMenuProps> {
                         />
                     </Col>
                 </Row>
+                {!includes(categoricalFeatures, colorBy) && (
+                    <Row className={styles.featureSelectRow}>
+                        <Col span={4}>Color scale:</Col>
+                        <Col span={20}>
+                            <SearchableSelect
+                                size="small"
+                                style={{ width: "100%" }}
+                                value={colorScale}
+                                options={COLOR_SCALES}
+                                onChange={(v: string) => handleSetColorScale(v)}
+                            />
+                        </Col>
+                    </Row>
+                )}
                 <Row className={styles.featureSelectRow}>
                     <Col span={4}>Group by:</Col>
                     <Col span={20}>
@@ -378,6 +400,7 @@ class ColorByMenu extends React.Component<ColorByMenuProps> {
                 <ActiveFilters />
                 <ShapeBy />
                 {this.renderPanel(panelKeys[1], "Selected sets", this.renderSelectionPanel())}
+                <RemovedSets />
             </React.Fragment>
         );
     }
@@ -391,6 +414,7 @@ function mapStateToProps(state: State): PropsFromState {
         colorByMenuOptions: getColorByDisplayOptions(state),
         groupByDisplayOptions: getGroupByDisplayOptions(state),
         colorForPlot: getLegendColors(state),
+        colorScale: selectionStateBranch.selectors.getColorScale(state),
         categoricalFeatures: metadataStateBranch.selectors.getCategoricalFeatureKeys(state),
         downloadConfig: selectionStateBranch.selectors.getDownloadConfig(state),
         downloadUrls: createUrlFromListOfIds(state),
@@ -406,6 +430,7 @@ function mapStateToProps(state: State): PropsFromState {
 const dispatchToPropsMap: DispatchProps = {
     handleApplyColorSwitchChange: selectionStateBranch.actions.toggleApplySelectionSetColors,
     handleChangeAxis: selectionStateBranch.actions.changeAxis,
+    handleSetColorScale: selectionStateBranch.actions.setColorScale,
     handleChangeGroupByCategory: selectionStateBranch.actions.changeGroupByCategory,
     handleChangeDownloadSettings: selectionStateBranch.actions.changeDownloadSettings,
     handleCloseSelectionSet: selectionStateBranch.actions.deselectGroupOfPoints,

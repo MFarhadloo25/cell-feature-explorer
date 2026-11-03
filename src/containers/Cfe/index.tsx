@@ -239,7 +239,7 @@ class Cfe extends React.Component<CfeProps, CfeState> {
                         right: "0",
                         width: "100px",
                         position: "absolute",
-                        backgroundColor: PALETTE.galleryBackground,
+                        backgroundColor: "var(--gallery-background)",
                     }}
                     width="100%"
                     collapsible={true}

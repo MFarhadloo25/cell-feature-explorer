@@ -46,6 +46,10 @@ import {
     SET_COLOR_OVERRIDES,
     SET_POINT_RADIUS,
     SET_POINT_OPACITY,
+    SET_COLOR_SCALE,
+    ADD_REMOVED_SET,
+    TOGGLE_REMOVED_SET,
+    DELETE_REMOVED_SET,
     CHANGE_CONNECT_BY_CATEGORY,
     CHANGE_CONNECT_BY_FEATURE,
     SET_SHOW_CONNECT_LINES,
@@ -89,9 +93,22 @@ import {
     SetLineOpacityAction,
     SetLineWidthAction,
     SetPointOpacityAction,
+    SetColorScaleAction,
+    AddRemovedSetAction,
+    RemovedSetIdAction,
+    RemovedSet,
     SetPointRadiusAction,
     SetShowConnectLines,
 } from "./types";
+
+/** First palette color not in use; colors of closed selections are reused, and the palette cycles when exhausted. */
+function nextSelectionColor(inUse: { [key: string]: string }): string {
+    const used = Object.values(inUse);
+    return (
+        INITIAL_SELECTION_COLORS.find((color) => !used.includes(color)) ??
+        INITIAL_SELECTION_COLORS[used.length % INITIAL_SELECTION_COLORS.length]
+    );
+}
 
 export const initialState: SelectionStateBranch = {
     applySelectionSetColoring: true,
@@ -127,6 +144,8 @@ export const initialState: SelectionStateBranch = {
     pointRadius: 4,
     /** Opacity of points in the plot, in the [0, 1] range. */
     pointOpacity: 0.5,
+    colorScale: "",
+    removedSets: [] as RemovedSet[],
     connectLineMovingAverageWindow: 1,
     connectLineWidth: GENERAL_PLOT_SETTINGS.connectionLineWidth,
     connectLineDefaultColor: GENERAL_PLOT_SETTINGS.connectionLineDefaultColor,
@@ -284,7 +303,7 @@ const actionToConfigMap: TypeToDescriptionMap = {
             ...state,
             selectedGroupColors: {
                 ...state.selectedGroupColors,
-                [action.key]: INITIAL_SELECTION_COLORS.splice(0, 1)[0],
+                [action.key]: nextSelectionColor(state.selectedGroupColors),
             },
             selectedGroups: {
                 ...state.selectedGroups,
@@ -359,6 +378,38 @@ const actionToConfigMap: TypeToDescriptionMap = {
             }
             return state;
         },
+    },
+    [ADD_REMOVED_SET]: {
+        accepts: (action: Action): action is AddRemovedSetAction => action.type === ADD_REMOVED_SET,
+        perform: (state: SelectionStateBranch, action: AddRemovedSetAction) => ({
+            ...state,
+            removedSets: [...state.removedSets, { ...action.payload, active: true }],
+        }),
+    },
+    [TOGGLE_REMOVED_SET]: {
+        accepts: (action: Action): action is RemovedSetIdAction =>
+            action.type === TOGGLE_REMOVED_SET,
+        perform: (state: SelectionStateBranch, action: RemovedSetIdAction) => ({
+            ...state,
+            removedSets: state.removedSets.map((set) =>
+                set.id === action.payload ? { ...set, active: !set.active } : set
+            ),
+        }),
+    },
+    [DELETE_REMOVED_SET]: {
+        accepts: (action: Action): action is RemovedSetIdAction =>
+            action.type === DELETE_REMOVED_SET,
+        perform: (state: SelectionStateBranch, action: RemovedSetIdAction) => ({
+            ...state,
+            removedSets: state.removedSets.filter((set) => set.id !== action.payload),
+        }),
+    },
+    [SET_COLOR_SCALE]: {
+        accepts: (action: Action): action is SetColorScaleAction => action.type === SET_COLOR_SCALE,
+        perform: (state: SelectionStateBranch, action: SetColorScaleAction) => ({
+            ...state,
+            colorScale: action.payload,
+        }),
     },
     [SET_COLOR_OVERRIDES]: {
         accepts: (action: Action): action is SetColorOverridesAction =>

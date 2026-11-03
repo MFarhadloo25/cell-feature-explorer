@@ -3,7 +3,7 @@
 
 .card {
     padding: 15px 15px 5px 15px;
-    background-color: #4b4b4b;
+    background-color: var(--header-gray);
     display: flex;
     flex-direction: column;
     max-width: var(--dataset-card-width);
@@ -35,11 +35,11 @@
 }
 
 .card :global(.ant-descriptions-item-label) {
-    color: #ffffffc4;
+    color: var(--text-soft);
 }
 
 .card :global(.ant-descriptions-item-content) {
-    color: #fff;
+    color: var(--white);
 }
 
 .card :global(.ant-card-meta-title) {

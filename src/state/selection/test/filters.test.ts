@@ -4,6 +4,9 @@ import { describe, it, expect } from "vitest";
 import type { DataForPlot, MeasuredFeatureDef } from "../../metadata/types";
 import {
     changeGroupByCategory,
+    addRemovedSet,
+    deleteRemovedSet,
+    toggleRemovedSet,
     clearFilters,
     removeFilter,
     setFilter,
@@ -11,12 +14,14 @@ import {
 } from "../actions";
 import {
     computeAvailableValues,
+    computeExcludedMask,
     computeRowMask,
     computeTrackInfo,
     summarizeMask,
     TIMEPOINT_COVERAGE_COLUMN,
 } from "../filters";
 import reducer, { initialState } from "../reducer";
+import { getExcludedCellIds } from "../selectors";
 
 const discrete = (key: string, names: string[]): MeasuredFeatureDef => ({
     discrete: true,
@@ -216,5 +221,29 @@ describe("filters reducer", () => {
         state = run(state, removeFilter("dataset"));
         expect(state.filters.map((f) => f.column)).toEqual(["gene"]);
         expect(run(state, clearFilters()).filters).toEqual([]);
+    });
+});
+
+describe("removed sets", () => {
+    const cells: any = { labels: { cellIds: ["a", "b", "c"] }, values: {} };
+    const run = (state: any, action: unknown) => reducer(state, action as unknown as UnknownAction);
+    const stateOf = (removedSets: any) => ({ selection: { ...initialState, removedSets } } as any);
+
+    it("masks excluded cells and passes everything when none are excluded", () => {
+        expect(computeExcludedMask(cells, ["b"])).toEqual([true, false, true]);
+        expect(computeExcludedMask(cells, [])).toBeNull();
+        expect(computeExcludedMask({ labels: {}, values: {} } as any, ["b"])).toBeNull();
+    });
+
+    it("holds several sets, each switched on or off independently, and can delete them", () => {
+        let state = run(initialState, addRemovedSet({ id: "s1", name: "one", cellIds: ["a"] }));
+        state = run(state, addRemovedSet({ id: "s2", name: "two", cellIds: ["b", "c"] }));
+        expect(getExcludedCellIds(stateOf(state.removedSets))).toEqual(["a", "b", "c"]);
+        state = run(state, toggleRemovedSet("s1"));
+        expect(getExcludedCellIds(stateOf(state.removedSets))).toEqual(["b", "c"]);
+        state = run(state, toggleRemovedSet("s2"));
+        expect(getExcludedCellIds(stateOf(state.removedSets))).toEqual([]);
+        state = run(state, deleteRemovedSet("s1"));
+        expect(state.removedSets.map((s: any) => s.id)).toEqual(["s2"]);
     });
 });

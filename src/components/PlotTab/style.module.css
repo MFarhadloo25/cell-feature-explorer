@@ -6,8 +6,9 @@
 }
 
 .content {
+    position: relative;
     flex: 2;
-    background-color: black;
+    background-color: var(--plot-area-background);
 }
 
 .color-menu {
