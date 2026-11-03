@@ -30,7 +30,7 @@
 }
 
 .title {
-    color: white;
+    color: var(--white);
 }
 
 .container :global(.ant-avatar) {

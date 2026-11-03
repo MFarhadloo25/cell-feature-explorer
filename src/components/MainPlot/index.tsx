@@ -14,6 +14,7 @@ import Plotly from "plotly.js/dist/plotly";
 import Plot from "react-plotly.js";
 
 import { GENERAL_PLOT_SETTINGS, SCATTER_PLOT_NAME } from "../../constants";
+import { useThemeMode } from "../../hooks";
 import { TickConversion } from "../../state/selection/types";
 import ExportFigure from "../ExportFigure";
 import type { LegendSection } from "../ExportFigure/figure";
@@ -32,8 +33,6 @@ interface MainPlotProps {
     canExportCsv: boolean;
     onExportCsv: () => void;
     leadingControls?: React.ReactNode;
-    /** White plot background with dark text; dark is the default. */
-    lightMode?: boolean;
     xAxisType: AxisType;
     yAxisType: AxisType;
     xTickConversion: TickConversion;
@@ -187,15 +186,10 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
         });
     }, [annotations, showFullAnnotation]);
 
-    const {
-        xAxisType,
-        xTickConversion,
-        xAxisRange,
-        yAxisType,
-        yTickConversion,
-        yAxisRange,
-        lightMode,
-    } = props;
+    const { xAxisType, xTickConversion, xAxisRange, yAxisType, yTickConversion, yAxisRange } =
+        props;
+    const [themeMode] = useThemeMode();
+    const lightMode = themeMode === "light";
     const layout = React.useMemo((): Partial<Layout> => {
         const textColor = lightMode ? "#000000" : GENERAL_PLOT_SETTINGS.textColor;
         const backgroundColor = lightMode ? "#ffffff" : GENERAL_PLOT_SETTINGS.backgroundColor;

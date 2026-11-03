@@ -6,7 +6,7 @@
     background: var(--text-gray);
     border: 1px solid rgba(255, 255, 255, 0.67);
     border-radius: 2px;
-    color: var(--white);
+    color: #ffffff;
     cursor: pointer;
     font-size: 11px;
     padding: 4px;
