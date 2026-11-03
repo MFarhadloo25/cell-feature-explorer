@@ -71,6 +71,24 @@ describe("export figure", () => {
         expect(data[0].marker.colorbar.title.text).toBe("Timepoint");
         expect((layout as any).legend.y).toBe(0.55);
         expect(numeric({ includeLegend: false }).data.some((t) => t.marker.showscale)).toBe(false);
+        // the app's own dark-themed scale bar is replaced, not duplicated
+        const onScreen = buildExportFigure({
+            traces: [
+                {
+                    type: "scattergl",
+                    x: [1],
+                    y: [1],
+                    marker: { color: ["a"], showscale: true },
+                } as any,
+            ],
+            layout: {},
+            xTitle: "X",
+            yTitle: "Y",
+            colorByTitle: "T",
+            legendSections: [],
+            options: DEFAULT_EXPORT_OPTIONS,
+        });
+        expect(onScreen.data[0].marker.showscale).toBe(false);
         expect(build().data.some((t) => t.marker?.showscale)).toBe(false);
     });
 

@@ -90,6 +90,8 @@ export interface ContinuousPlotData {
     colorRange?: [number, number];
     /** Plotly colorscale name; undefined uses Plotly's default. */
     colorScale?: string;
+    /** Display name of the color-by column, titles the scale bar. */
+    colorLabel?: string;
     plotName?: string;
     dataType: DataType.CONTINUOUS;
 }

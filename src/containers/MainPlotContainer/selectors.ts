@@ -11,6 +11,7 @@ import {
     SCATTER_PLOT_NAME,
     SELECTIONS_PLOT_NAME,
     THUMBNAIL_PATH,
+    GENERAL_PLOT_SETTINGS,
 } from "../../constants";
 import {
     getCategoricalFeatureKeys,
@@ -143,10 +144,25 @@ export const getPlotlyCustomData = createSelector(
     }
 );
 
+export const getColorByTitle = createSelector(
+    [getColorBySelection, getMeasuredFeaturesDefs],
+    (colorBy, defs): string => defs.find((d) => d.key === colorBy)?.displayName ?? String(colorBy)
+);
+
 /** Full-dataset range of the color-by column; filters and legend hiding must not rescale numeric colors. */
 const getColorByRange = createSelector(
     [getPerCellDataForPlot, getColorBySelection],
     (data, colorBy) => numericRange(data.values?.[colorBy as string])
+);
+
+/** Range, scale and label for a numeric color-by (one selector: reselect's typings stop at 12 inputs). */
+const getNumericColorInfo = createSelector(
+    [getColorByRange, getColorScale, getColorByTitle],
+    (colorRange, colorScale, colorLabel) => ({
+        colorRange,
+        colorScale: colorScale || undefined,
+        colorLabel,
+    })
 );
 
 export const getMainPlotData = createSelector(
@@ -161,8 +177,7 @@ export const getMainPlotData = createSelector(
         getCategoryGroupColorsAndNames,
         getCategoricalFeatureKeys,
         getFilteredShapeValues,
-        getColorByRange,
-        getColorScale,
+        getNumericColorInfo,
     ],
     (
         xValues,
@@ -175,8 +190,7 @@ export const getMainPlotData = createSelector(
         colorsForPlot,
         categoricalFeatures,
         symbols,
-        colorRange,
-        colorScale
+        numericColorInfo
     ): GroupedPlotData | ContinuousPlotData => {
         // Only preserve values at indices where both x and y values are not null,
         // because a coordinate like (3, null) won't be plotted anyway and produces
@@ -199,8 +213,7 @@ export const getMainPlotData = createSelector(
             return {
                 color: categoryToColorBy === categoryToGroupBy ? undefined : colorByValues,
                 dataType: DataType.CONTINUOUS,
-                colorRange,
-                colorScale: colorScale || undefined,
+                ...numericColorInfo,
                 ids,
                 x: newXAndYValues.xValues,
                 y: newXAndYValues.yValues,
@@ -415,6 +428,12 @@ export const composePlotlyData = createSelector(
     }
 );
 
+const SCALE_BAR_FONT = {
+    color: GENERAL_PLOT_SETTINGS.textColor,
+    family: "Open Sans, verdana, arial, sans-serif",
+    size: 12,
+};
+
 function colorSettings(
     plotSettings: Partial<PlotData>,
     plotData: GroupedPlotData | ContinuousPlotData,
@@ -453,6 +472,16 @@ function colorSettings(
             cmin: plotData.colorRange?.[0],
             cmax: plotData.colorRange?.[1],
             colorscale: plotData.colorScale,
+            // Scale bar for numeric color-by; only the main trace has a colorRange.
+            showscale: !!plotData.colorRange,
+            colorbar: {
+                title: { text: plotData.colorLabel, font: SCALE_BAR_FONT },
+                tickfont: SCALE_BAR_FONT,
+                thickness: 14,
+                len: 0.6,
+                outlinewidth: 0,
+                // the bundled typings predate `title.text`
+            } as any,
             opacity: plotData.opacity ?? mainPlotSettings.unselectedCircleOpacity,
         },
     };
@@ -769,9 +798,4 @@ export const getExportLegendSections = createSelector(
         }
         return sections;
     }
-);
-
-export const getColorByTitle = createSelector(
-    [getColorBySelection, getMeasuredFeaturesDefs],
-    (colorBy, defs): string => defs.find((d) => d.key === colorBy)?.displayName ?? String(colorBy)
 );

@@ -108,6 +108,10 @@ export function buildExportFigure({
         if (typeof trace.marker?.size === "number") {
             out.marker = { ...trace.marker, size: trace.marker.size * options.pointScale };
         }
+        // The on-screen scale bar is dark-themed; the export draws its own (or none).
+        if (trace.marker?.showscale) {
+            out.marker = { ...out.marker, showscale: false };
+        }
         // Numeric color-by: Plotly maps the values onto its colorscale, so show that scale as a color bar.
         const numeric = Array.isArray(trace.marker?.color) && trace.marker.color.some(isNumber);
         if (options.includeLegend && numeric && !hasColorbar) {
