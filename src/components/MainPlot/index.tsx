@@ -310,6 +310,8 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
             <Plot
                 data={plotDataArray}
                 useResizeHandler={true}
+                // react-plotly's default inline-block box keeps its old width; Plotly measures this div.
+                style={{ width: "100%" }}
                 layout={layout}
                 config={config}
                 onClick={handlePointClick}
