@@ -15,12 +15,15 @@
     z-index: 10;
 }
 
-/* Sits beside the Hide panel button at the top-left of the plot area. */
+/* One row for every top-left control, so they cannot overlap; it wraps instead of running under the
+   Plotly mode bar on the right. */
 .toolbar {
     position: absolute;
     top: 8px;
-    left: 125px;
+    left: 8px;
+    max-width: calc(100% - 220px);
     z-index: 10;
     display: flex;
+    flex-wrap: wrap;
     gap: 6px;
 }

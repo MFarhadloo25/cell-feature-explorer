@@ -49,16 +49,21 @@ class PlotTab extends React.Component {
                     />
                 </Sider>
                 <Content className={styles.content}>
-                    <Button
-                        className={styles.panelToggle}
-                        size="small"
-                        icon={panelHidden ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-                        onClick={this.togglePanel}
-                    >
-                        {panelHidden ? "Show panel" : "Hide panel"}
-                    </Button>
                     <div>
-                        <MainPlotContainer handleSelectionToolUsed={this.onSelectionToolUsed} />
+                        <MainPlotContainer
+                            handleSelectionToolUsed={this.onSelectionToolUsed}
+                            leadingControls={
+                                <Button
+                                    size="small"
+                                    icon={
+                                        panelHidden ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />
+                                    }
+                                    onClick={this.togglePanel}
+                                >
+                                    {panelHidden ? "Show panel" : "Hide panel"}
+                                </Button>
+                            }
+                        />
                     </div>
                 </Content>
             </Layout>

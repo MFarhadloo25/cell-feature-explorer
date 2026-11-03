@@ -31,6 +31,7 @@ interface MainPlotProps {
     onGroupSelected: (selected: PlotSelectionEvent) => void;
     canExportCsv: boolean;
     onExportCsv: () => void;
+    leadingControls?: React.ReactNode;
     xAxisType: AxisType;
     yAxisType: AxisType;
     xTickConversion: TickConversion;
@@ -308,6 +309,7 @@ const MainPlot: React.FC<MainPlotProps> = (props) => {
     return (
         <>
             <div className={styles.toolbar}>
+                {props.leadingControls}
                 <ExportFigure
                     traces={plotDataArray}
                     layout={layout}

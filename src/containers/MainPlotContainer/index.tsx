@@ -109,6 +109,8 @@ interface DispatchProps {
 interface PropsFromApp {
     // props from <App />
     handleSelectionToolUsed: () => void;
+    /** Rendered at the start of the plot's top-left toolbar. */
+    leadingControls?: React.ReactNode;
 }
 
 type MainPlotContainerProps = PropsFromState & DispatchProps & PropsFromApp;
@@ -389,6 +391,7 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
                         onGroupSelected={this.onGroupSelected}
                         canExportCsv={!!this.props.csvDataset}
                         onExportCsv={this.onExportCsv}
+                        leadingControls={this.props.leadingControls}
                         onPointHovered={this.onPointHovered}
                         onPointUnhovered={this.onPointUnhovered}
                         xAxisType={includes(categoricalFeatures, xDropDownValue) ? "array" : "auto"}
