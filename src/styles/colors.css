@@ -23,6 +23,8 @@
     --white: #ffffff;
     --text-soft: #ffffffc4;
     --plot-area-background: #000000;
+    --gallery-background: #4b4b4bd1;
+    --gallery-trigger-background: #000000a1;
 }
 
 /* Whole-window white mode, switched by hooks/useThemeMode. --white is used for text, so it flips to dark. */
@@ -43,4 +45,6 @@
     --white: #000000;
     --text-soft: #000000c4;
     --plot-area-background: #ffffff;
+    --gallery-background: #f0f0f0f2;
+    --gallery-trigger-background: #ffffffa1;
 }

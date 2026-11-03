@@ -197,7 +197,8 @@ class App extends React.Component<AppProps> {
                         </Layout>
                     </Layout>
                 </div>
-                <ThemeToggle />
+                {/* With a dataset open, the switch lives in the plot toolbar. */}
+                {!selectedDataset && <ThemeToggle floating />}
             </ThemedConfigProvider>
         );
     }

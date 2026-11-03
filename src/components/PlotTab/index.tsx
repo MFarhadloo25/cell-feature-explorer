@@ -5,6 +5,7 @@ import * as React from "react";
 
 import ColorByMenu from "../../containers/ColorByMenu";
 import MainPlotContainer from "../../containers/MainPlotContainer";
+import ThemeToggle from "../ThemeToggle";
 
 const { Content, Sider } = Layout;
 
@@ -53,15 +54,22 @@ class PlotTab extends React.Component {
                         <MainPlotContainer
                             handleSelectionToolUsed={this.onSelectionToolUsed}
                             leadingControls={
-                                <Button
-                                    size="small"
-                                    icon={
-                                        panelHidden ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />
-                                    }
-                                    onClick={this.togglePanel}
-                                >
-                                    {panelHidden ? "Show panel" : "Hide panel"}
-                                </Button>
+                                <>
+                                    <Button
+                                        size="small"
+                                        icon={
+                                            panelHidden ? (
+                                                <MenuUnfoldOutlined />
+                                            ) : (
+                                                <MenuFoldOutlined />
+                                            )
+                                        }
+                                        onClick={this.togglePanel}
+                                    >
+                                        {panelHidden ? "Show panel" : "Hide panel"}
+                                    </Button>
+                                    <ThemeToggle />
+                                </>
                             }
                         />
                     </div>

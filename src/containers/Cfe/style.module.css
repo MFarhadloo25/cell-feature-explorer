@@ -110,7 +110,7 @@
 }
 
 .sider {
-    background-color: #4b4b4bd1;
+    background-color: var(--gallery-background);
     height: calc(100vh - var(--header-height));
     position: absolute;
     right: 0;
@@ -151,7 +151,7 @@
 }
 
 .sider:global(.ant-layout-sider-collapsed) :global(.ant-layout-sider-trigger):hover {
-    border-left: 2px solid white;
+    border-left: 2px solid var(--white);
 }
 
 .sider:global(.ant-layout-sider-collapsed) :global(.ant-layout-sider-trigger) span {
@@ -178,7 +178,7 @@
     position: absolute;
     left: -20px;
     top: 0px;
-    background-color: #000000a1;
+    background-color: var(--gallery-trigger-background);
     border-left: 0.5px solid var(--border-gray);
     border-right: 0.5px solid var(--border-gray);
 

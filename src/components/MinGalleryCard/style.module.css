@@ -43,7 +43,7 @@
 }
 
 .avatar:hover {
-    border: 1px solid white;
+    border: 1px solid var(--white);
     cursor: pointer;
 }
 

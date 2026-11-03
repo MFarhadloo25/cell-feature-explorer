@@ -92,7 +92,7 @@
 }
 
 .container img:hover {
-    border: 1px solid white;
+    border: 1px solid var(--white);
     cursor: pointer;
 }
 
@@ -110,11 +110,11 @@
 }
 
 .container :global(.ant-list-item-action li) {
-    color: white;
+    color: var(--white);
 }
 
 .container :global(.ant-list-item-action a) {
-    color: white;
+    color: var(--white);
 }
 
 .stage {

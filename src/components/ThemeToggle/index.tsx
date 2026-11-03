@@ -6,14 +6,15 @@ import { useThemeMode } from "../../hooks";
 
 import styles from "./style.module.css";
 
-/** Floating dark/white switch for the whole window; sits on every page, including the landing page. */
-const ThemeToggle: React.FC = () => {
+/** Dark/white switch for the whole window. Inline in the plot toolbar; `floating` pins it to the corner. */
+const ThemeToggle: React.FC<{ floating?: boolean }> = ({ floating }) => {
     const [mode, toggle] = useThemeMode();
     const toLight = mode === "dark";
     return (
         <Button
-            className={styles.toggle}
-            shape="circle"
+            className={floating ? styles.floating : undefined}
+            size={floating ? "middle" : "small"}
+            shape={floating ? "circle" : "default"}
             icon={toLight ? <SunOutlined /> : <MoonOutlined />}
             onClick={toggle}
             title={toLight ? "Switch to white background" : "Switch to dark background"}
