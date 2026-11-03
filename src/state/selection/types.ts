@@ -41,6 +41,8 @@ export interface SelectionStateBranch {
     pointOpacity: number;
     /** Plotly colorscale name for a numeric color-by; "" is Plotly's default (grey to red). */
     colorScale: string;
+    /** Cells removed from the plot as outliers/artifacts (box or lasso in remove mode). Not saved in the URL. */
+    excludedCellIds: string[];
     selectedAlbum: number;
     selectedGroupColors: { [key: string]: string };
     selectedGroups: SelectedGroups;
@@ -271,6 +273,11 @@ export interface SetLineOpacityAction {
 
 export interface SetPointRadiusAction {
     payload: number;
+    type: string;
+}
+
+export interface ExcludeCellsAction {
+    payload: string[];
     type: string;
 }
 

@@ -30,6 +30,7 @@ import { findFeature, getCategoryString, getFileInfoDatumFromCellId, sortNumeric
 import {
     combineMasks,
     computeAvailableValues,
+    computeExcludedMask,
     computeHiddenMask,
     computeRowMask,
     computeTrackInfo,
@@ -73,6 +74,7 @@ export const getPointRadius = (state: State): number => state.selection.pointRad
 /** Returns the opacity of points in the plot, in a [0, 1] range. */
 export const getPointOpacity = (state: State): number => state.selection.pointOpacity;
 export const getColorScale = (state: State): string => state.selection.colorScale;
+export const getExcludedCellIds = (state: State): string[] => state.selection.excludedCellIds;
 export const getSelectionSetColors = (state: State): { [key: string]: string } =>
     state.selection.selectedGroupColors;
 export const getFiltersToExclude = (state: State): string[] => state.selection.filterExclude;
@@ -396,9 +398,25 @@ export const getTrackInfo = createSelector(
 );
 
 /** Per-row pass/fail for the persistent filters, or null when none are active. */
-export const getFilterRowMask = createSelector(
+const getColumnFilterRowMask = createSelector(
     [getPerCellDataForPlot, getMeasuredFeaturesDefs, getFilters, getTrackInfo],
     computeRowMask
+);
+
+const getExcludedMask = createSelector(
+    [getPerCellDataForPlot, getExcludedCellIds],
+    computeExcludedMask
+);
+
+/** Rows eligible under the column filters and not removed as outliers; counts and legends build on this. */
+export const getFilterRowMask = createSelector(
+    [getColumnFilterRowMask, getExcludedMask],
+    combineMasks
+);
+
+/** How many cells of the loaded dataset are currently removed. */
+export const getExcludedCount = createSelector([getExcludedMask], (mask) =>
+    mask ? mask.filter((keep) => !keep).length : 0
 );
 
 /** Per filtered column, the values still available given the other filters (in the column's option order). */

@@ -40,6 +40,8 @@ import {
     SET_POINT_RADIUS,
     SET_POINT_OPACITY,
     SET_COLOR_SCALE,
+    EXCLUDE_CELLS,
+    RESTORE_EXCLUDED_CELLS,
     CHANGE_CONNECT_BY_CATEGORY,
     CHANGE_CONNECT_BY_FEATURE,
     SET_SHOW_CONNECT_LINES,
@@ -78,6 +80,7 @@ import {
     SetLineWidthAction,
     SetPointOpacityAction,
     SetColorScaleAction,
+    ExcludeCellsAction,
     SetPointRadiusAction,
     SyncStateWithURLAction,
     ColumnFilter,
@@ -219,6 +222,14 @@ export function setPointOpacity(payload: number): SetPointOpacityAction {
         payload,
         type: SET_POINT_OPACITY,
     };
+}
+
+export function excludeCells(payload: string[]): ExcludeCellsAction {
+    return { payload, type: EXCLUDE_CELLS };
+}
+
+export function restoreExcludedCells(): { type: string } {
+    return { type: RESTORE_EXCLUDED_CELLS };
 }
 
 export function setColorScale(payload: string): SetColorScaleAction {

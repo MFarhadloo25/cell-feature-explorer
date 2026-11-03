@@ -23,6 +23,7 @@ import {
     ChangeHoveredPointAction,
     ChangeMousePositionAction,
     DeselectPointAction,
+    ExcludeCellsAction,
     LassoOrBoxSelectAction,
     MousePosition,
     SelectAxisAction,
@@ -54,6 +55,9 @@ import {
 } from "./selectors";
 import type { LegendSection } from "../../components/ExportFigure/figure";
 import { getFeatureDefTooltip } from "../../state/selection/selectors";
+import { getImageDataset } from "../../state/image-dataset/selectors";
+import CsvRequest from "../../state/image-dataset/csv-dataset";
+import { downloadText, rowsToCsv } from "../../util/exportCsv";
 import { formatThumbnailSrc } from "../../state/util";
 import { createThumbnailImageSrc } from "../../util/thumbnails";
 
@@ -66,6 +70,9 @@ interface PropsFromState {
     annotations: PlotlyAnnotation[];
     legendSections: LegendSection[];
     colorByTitle: string;
+    excludedCount: number;
+    csvDataset: CsvRequest | undefined;
+    keptCellIds: string[];
     categoricalFeatures: string[];
     clickedPoints: string[];
     filtersToExclude: string[];
@@ -99,6 +106,8 @@ interface DispatchProps {
     updateMousePosition: ActionCreator<ChangeMousePositionAction>;
     handleChangeAxis: ActionCreator<SelectAxisAction>;
     requestCellFileInfoData: ActionCreator<RequestAction>;
+    handleExcludeCells: ActionCreator<ExcludeCellsAction>;
+    handleRestoreExcluded: ActionCreator<{ type: string }>;
 }
 
 interface PropsFromApp {
@@ -131,6 +140,7 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
         this.onPointHovered = this.onPointHovered.bind(this);
         this.onPointUnhovered = this.onPointUnhovered.bind(this);
         this.onGroupSelected = this.onGroupSelected.bind(this);
+        this.onExportCsv = this.onExportCsv.bind(this);
         this.onPlotUnhovered = this.onPlotUnhovered.bind(this);
         this.renderPopover = this.renderPopover.bind(this);
     }
@@ -230,6 +240,16 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
         // prevents click events from triggering the popover to close
         if (relatedTarget.className) {
             changeHoveredPoint(null);
+        }
+    }
+
+    public onExportCsv() {
+        const { csvDataset, keptCellIds } = this.props;
+        if (csvDataset) {
+            downloadText(
+                "cell-feature-explorer-points.csv",
+                rowsToCsv(csvDataset.csvData, csvDataset.idToIndex, keptCellIds)
+            );
         }
     }
 
@@ -371,6 +391,11 @@ class MainPlotContainer extends React.Component<MainPlotContainerProps, MainPlot
                         onPointClicked={this.onPointClicked}
                         annotations={annotations}
                         onGroupSelected={this.onGroupSelected}
+                        onRemovePoints={this.props.handleExcludeCells}
+                        onRestorePoints={this.props.handleRestoreExcluded}
+                        removedCount={this.props.excludedCount}
+                        canExportCsv={!!this.props.csvDataset}
+                        onExportCsv={this.onExportCsv}
                         onPointHovered={this.onPointHovered}
                         onPointUnhovered={this.onPointUnhovered}
                         xAxisType={includes(categoricalFeatures, xDropDownValue) ? "array" : "auto"}
@@ -395,6 +420,11 @@ function mapStateToProps(state: State): PropsFromState {
         annotations: getAnnotations(state),
         legendSections: getExportLegendSections(state),
         colorByTitle: getColorByTitle(state),
+        excludedCount: selectionStateBranch.selectors.getExcludedCount(state),
+        // Only CSV datasets keep the original rows needed to export a reloadable file.
+        csvDataset: ((d) => (d instanceof CsvRequest ? d : undefined))(getImageDataset(state)),
+        keptCellIds:
+            selectionStateBranch.selectors.getFilteredCellData(state).labels?.cellIds ?? [],
         clickedPoints: selectionStateBranch.selectors.getClickedScatterPoints(state),
         categoricalFeatures: metadataStateBranch.selectors.getCategoricalFeatureKeys(state),
         filtersToExclude: selectionStateBranch.selectors.getFiltersToExclude(state),
@@ -429,6 +459,8 @@ const dispatchToPropsMap: DispatchProps = {
     requestCellFileInfoData: metadataStateBranch.actions.requestCellFileInfoData,
     requestFeatureData: metadataStateBranch.actions.requestFeatureData,
     updateMousePosition: selectionStateBranch.actions.changeMousePosition,
+    handleExcludeCells: selectionStateBranch.actions.excludeCells,
+    handleRestoreExcluded: selectionStateBranch.actions.restoreExcludedCells,
 };
 
 export default connect<PropsFromState, DispatchProps, PropsFromApp, State>(

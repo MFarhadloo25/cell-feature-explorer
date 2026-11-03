@@ -26,6 +26,8 @@ export const SET_COLOR_OVERRIDES = makeSelectionConstant("set-color-overrides");
 export const SET_POINT_RADIUS = makeSelectionConstant("set-point-radius");
 export const SET_POINT_OPACITY = makeSelectionConstant("set-point-opacity");
 export const SET_COLOR_SCALE = makeSelectionConstant("set-color-scale");
+export const EXCLUDE_CELLS = makeSelectionConstant("exclude-cells");
+export const RESTORE_EXCLUDED_CELLS = makeSelectionConstant("restore-excluded-cells");
 export const TOGGLE_FILTER_BY_CATEGORY_NAME = makeSelectionConstant(
     "toggle-filter-by-category-name"
 );

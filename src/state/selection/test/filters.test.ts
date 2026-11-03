@@ -4,6 +4,8 @@ import { describe, it, expect } from "vitest";
 import type { DataForPlot, MeasuredFeatureDef } from "../../metadata/types";
 import {
     changeGroupByCategory,
+    excludeCells,
+    restoreExcludedCells,
     clearFilters,
     removeFilter,
     setFilter,
@@ -11,6 +13,7 @@ import {
 } from "../actions";
 import {
     computeAvailableValues,
+    computeExcludedMask,
     computeRowMask,
     computeTrackInfo,
     summarizeMask,
@@ -216,5 +219,24 @@ describe("filters reducer", () => {
         state = run(state, removeFilter("dataset"));
         expect(state.filters.map((f) => f.column)).toEqual(["gene"]);
         expect(run(state, clearFilters()).filters).toEqual([]);
+    });
+});
+
+describe("removing points as outliers", () => {
+    const cells: any = { labels: { cellIds: ["a", "b", "c"] }, values: {} };
+
+    it("masks excluded cells and passes everything when none are excluded", () => {
+        expect(computeExcludedMask(cells, ["b"])).toEqual([true, false, true]);
+        expect(computeExcludedMask(cells, [])).toBeNull();
+        expect(computeExcludedMask({ labels: {}, values: {} } as any, ["b"])).toBeNull();
+    });
+
+    it("accumulates without duplicates and restores all", () => {
+        let state = reducer(initialState, excludeCells(["a", "b"]) as unknown as UnknownAction);
+        state = reducer(state, excludeCells(["b", "c"]) as unknown as UnknownAction);
+        expect(state.excludedCellIds).toEqual(["a", "b", "c"]);
+        expect(
+            reducer(state, restoreExcludedCells() as unknown as UnknownAction).excludedCellIds
+        ).toEqual([]);
     });
 });

@@ -16,9 +16,11 @@
 }
 
 /* Sits beside the Hide panel button at the top-left of the plot area. */
-.export-button {
+.toolbar {
     position: absolute;
     top: 8px;
     left: 125px;
     z-index: 10;
+    display: flex;
+    gap: 6px;
 }
